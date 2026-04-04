@@ -1,23 +1,54 @@
-# DeepResearch
+# DeepResearch (Sibyl Architecture)
 
-Automated AI Research Pipeline for conducting literature research, proposing novel ideas, designing/executing experiments, analyzing results, and generating papers.
+Autonomous AI Research System -- from idea to paper, zero human intervention. RunPod-native compute.
 
 ## Project Structure
 
 ```
-src/deepresearch/
-├── core/           # Config, state management, exceptions
-├── providers/      # AI providers (OpenAI, Anthropic, Google)
-├── modules/
-│   ├── literature/ # arXiv search, novelty checking
-│   ├── ideation/   # Idea generation
-│   ├── experiment/ # Design, execution, checkpointing
-│   ├── analysis/   # Statistical analysis
-│   ├── figures/    # Matplotlib plots, TikZ diagrams
-│   ├── vision/     # MNIST/CIFAR datasets, vision experiments
-│   └── writing/    # Paper section generation
-├── pipeline/       # Research and vision pipeline orchestrators
-└── cli/            # Typer CLI (main.py)
+sibyl/                      # Main package
+├── __init__.py
+├── _paths.py               # Path resolution
+├── config.py               # YAML-based configuration
+├── workspace.py            # Filesystem communication hub
+├── orchestrate.py          # Main orchestrator (FarsOrchestrator)
+├── cli.py                  # Typer CLI
+├── compute/                # Compute backends
+│   ├── base.py             # Abstract ComputeBackend
+│   └── runpod_backend.py   # RunPod API + SSH
+├── orchestration/          # Pipeline orchestration
+│   ├── models.py           # Action, AgentTask dataclasses
+│   ├── constants.py        # PIPELINE_STAGES (18 stages)
+│   ├── state_machine.py    # Transitions, pivots, quality gates
+│   ├── lifecycle.py        # Action generation per stage
+│   ├── action_dispatcher.py # Action -> execution script
+│   ├── prompt_loader.py    # Dynamic prompt compilation
+│   ├── context_builder.py  # Priority-based context packing
+│   ├── simple_actions.py   # Single-skill action builders
+│   ├── team_actions.py     # Multi-agent team builders
+│   ├── experiment_actions.py # Experiment action builders
+│   ├── writing_artifacts.py  # Writing action builders
+│   ├── review_artifacts.py   # Review action builders
+│   ├── reflection_postprocess.py # Post-reflection evolution hook
+│   ├── dashboard_data.py   # Dashboard data generation
+│   └── cli_core.py         # CLI helpers
+├── gpu_scheduler.py        # Task parallelization, topological sort
+├── experiment_recovery.py  # Crash detection, state sync
+├── experiment_records.py   # JSONL experiment database
+├── auto_fix.py             # Mechanical fixes (pip install, YAML)
+├── self_heal.py            # Error routing, circuit breaker
+├── reflection.py           # Iteration logging, quality trajectory
+├── evolution.py            # Cross-project self-improvement
+├── runtime_assets.py       # .claude/ setup, CLAUDE.md generation
+├── latex_pipeline.py       # Markdown -> LaTeX -> PDF
+├── prompts/                # 29 agent prompt templates
+├── dashboard/server.py     # Flask dashboard
+├── webui/                  # WebUI backend (Flask + WebSocket)
+└── rebuttal/               # Rebuttal pipeline (7-stage)
+plugin/                     # Claude Code plugin
+├── commands/               # 9 skill commands
+└── hooks/scripts/          # 3 lifecycle hooks
+.claude/agents/             # 34 agent definitions (YAML)
+.claude/skills/             # 34 skill definitions (Markdown)
 ```
 
 ## Commands
@@ -29,40 +60,52 @@ pip install -e ".[dev]"
 # Run tests
 pytest tests/ -v
 
-# Type check
-mypy src/deepresearch
+# CLI
+sibyl status .
+sibyl init "research topic"
+sibyl experiment-status .
+sibyl dispatch .
+sibyl evolve . --show
+sibyl self-heal-scan .
+sibyl latex-compile .
+sibyl dashboard .
 
-# Lint
-ruff check src/deepresearch
-
-# CLI usage
-deepresearch vision "topic" --datasets mnist,cifar10 --samples 100
-deepresearch run "topic" --budget 50
-deepresearch search "query" --max 20
+# Run demo
+python -m sibyl.demo
 ```
+
+## Pipeline (18 stages)
+
+init -> literature_search -> idea_debate -> planning -> pilot_experiments
+-> idea_validation_decision -> experiment_cycle -> result_debate
+-> experiment_decision -> writing_outline -> writing_sections
+-> writing_integrate -> writing_final_review -> writing_latex
+-> review -> reflection -> quality_gate -> done
 
 ## Key Patterns
 
-- **Providers**: All AI providers extend `BaseProvider` in `providers/base.py`
-- **Pipeline stages**: Defined in `pipeline/stage.py`, orchestrated by `research_pipeline.py`
-- **Async throughout**: Uses `asyncio` and `aiofiles` for async operations
-- **Config**: Hydra-based config in `configs/`, Pydantic models in `core/config.py`
-- **State**: Research state managed via `core/state.py` with checkpoint support
+- **State machine**: Deterministic transitions with pivot/refine/quality-gate loops
+- **Workspace as hub**: All agents communicate via workspace files (JSON + Markdown)
+- **Action dispatch**: Orchestrator generates Action -> rendered to execution script
+- **Dual loop**: Inner (research iteration) + Outer (self-evolution across projects)
+- **RunPod compute**: All experiments run on RunPod GPU pods
+- **Self-healing**: Mechanical auto-fix -> skill-based repair -> circuit breaker
+- **Multi-agent teams**: 6-agent debates for ideas and results
+- **Prompt compilation**: Base template + overlays + project memory + evolution lessons
 
 ## Environment Variables
 
 ```bash
+RUNPOD_API_KEY=...
 ANTHROPIC_API_KEY=...
-OPENAI_API_KEY=...
-GOOGLE_API_KEY=...
+SIBYL_ROOT=...  # optional: override repo root detection
 ```
 
-## Tech Stack
+## Config
 
-- Python 3.11+
-- AI: anthropic, openai, google-generativeai
-- Data: numpy, scipy, pandas
-- Viz: matplotlib, seaborn
-- Config: hydra-core, pydantic
-- CLI: typer, rich
-- Vision: torch, torchvision
+Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
+- `compute_backend: runpod` (always RunPod)
+- `runpod_gpu_type`, `runpod_max_pods`, `runpod_spot`
+- `research_focus: 1-5` (explore <-> deep focus)
+- `writing_mode: parallel|sequential|codex`
+- `evolution_enabled`, `self_heal_enabled`
