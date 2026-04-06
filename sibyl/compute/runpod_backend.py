@@ -4,7 +4,9 @@ import os
 import subprocess
 import json
 import time
+from functools import lru_cache
 from pathlib import Path
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 from sibyl.compute.base import ComputeBackend
@@ -12,14 +14,10 @@ from sibyl.compute.base import ComputeBackend
 if TYPE_CHECKING:
     from sibyl.config import Config
 
-# SSH key search order
-_SSH_KEY_CANDIDATES = [
-    "id_ed25519",
-    "id_rsa",
-    "id_ecdsa",
-]
+_SSH_KEY_CANDIDATES = ["id_ed25519", "id_rsa", "id_ecdsa"]
 
 
+@lru_cache(maxsize=1)
 def _find_ssh_key() -> str | None:
     """Auto-detect the first available SSH private key in ~/.ssh/."""
     ssh_dir = Path.home() / ".ssh"
@@ -42,6 +40,15 @@ class RunPodBackend(ComputeBackend):
         self._api_key = config.runpod_api_key or os.environ.get("RUNPOD_API_KEY", "")
         self._ssh_key: str | None = _find_ssh_key()
 
+    def _runpod(self) -> ModuleType:
+        """Import runpod and set the API key. Centralizes the repeated boilerplate."""
+        try:
+            import runpod
+        except ImportError:
+            raise RuntimeError("runpod package not installed. Run: pip install runpod")
+        runpod.api_key = self._api_key
+        return runpod
+
     @property
     def backend_type(self) -> str:
         return "runpod"
@@ -54,12 +61,7 @@ class RunPodBackend(ComputeBackend):
 
     def create_pod(self, name: str) -> dict:
         """Create a RunPod GPU pod via the RunPod API."""
-        try:
-            import runpod
-        except ImportError:
-            raise RuntimeError("runpod package not installed. Run: pip install runpod")
-
-        runpod.api_key = self._api_key
+        runpod = self._runpod()
         if not self._api_key:
             raise ValueError("RUNPOD_API_KEY not set. Set it in config or environment.")
 
@@ -82,21 +84,11 @@ class RunPodBackend(ComputeBackend):
 
     def terminate_pod(self, pod_id: str) -> None:
         """Terminate a RunPod pod."""
-        try:
-            import runpod
-        except ImportError:
-            raise RuntimeError("runpod package not installed.")
-        runpod.api_key = self._api_key
-        runpod.terminate_pod(pod_id)
+        self._runpod().terminate_pod(pod_id)
 
     def list_pods(self) -> list[dict]:
         """List all active RunPod pods."""
-        try:
-            import runpod
-        except ImportError:
-            raise RuntimeError("runpod package not installed.")
-        runpod.api_key = self._api_key
-        return runpod.get_pods()
+        return self._runpod().get_pods()
 
     def get_pod_ssh_info(self, pod_id: str) -> dict:
         """Get SSH connection info for a pod.
@@ -107,12 +99,7 @@ class RunPodBackend(ComputeBackend):
         - "full": public IP + mapped port (supports SCP/SFTP/rsync)
         - "basic": proxied via ssh.runpod.io (no SCP/SFTP)
         """
-        try:
-            import runpod
-        except ImportError:
-            raise RuntimeError("runpod package not installed.")
-        runpod.api_key = self._api_key
-        pod = runpod.get_pod(pod_id)
+        pod = self._runpod().get_pod(pod_id)
         runtime = pod.get("runtime") or {}
         ports = runtime.get("ports") or []
 
@@ -158,20 +145,11 @@ class RunPodBackend(ComputeBackend):
 
     def stop_pod(self, pod_id: str) -> None:
         """Stop a RunPod pod (preserves volume, releases GPU)."""
-        try:
-            import runpod
-        except ImportError:
-            raise RuntimeError("runpod package not installed.")
-        runpod.api_key = self._api_key
-        runpod.stop_pod(pod_id)
+        self._runpod().stop_pod(pod_id)
 
     def wait_for_ready(self, pod_id: str, timeout_sec: int = 300, poll_sec: int = 5) -> bool:
         """Block until pod is running and has a runtime. Returns True if ready."""
-        try:
-            import runpod
-        except ImportError:
-            raise RuntimeError("runpod package not installed.")
-        runpod.api_key = self._api_key
+        runpod = self._runpod()
         deadline = time.time() + timeout_sec
         while time.time() < deadline:
             pod = runpod.get_pod(pod_id)
@@ -229,14 +207,12 @@ class RunPodBackend(ComputeBackend):
         """Upload via tar pipe over basic SSH (no rsync support)."""
         try:
             ssh_prefix = self._ssh_cmd_prefix(ssh_info)
-            tar_cmd = f"tar -czf - -C {local_path} ."
+            tar_cmd = ["tar", "-czf", "-", "-C", local_path, "."]
             ssh_cmd = ssh_prefix + [
                 self._ssh_target(ssh_info),
                 f"mkdir -p {remote_path} && tar -xzf - -C {remote_path}",
             ]
-            tar_proc = subprocess.Popen(
-                tar_cmd, shell=True, stdout=subprocess.PIPE,
-            )
+            tar_proc = subprocess.Popen(tar_cmd, stdout=subprocess.PIPE)
             ssh_proc = subprocess.Popen(
                 ssh_cmd, stdin=tar_proc.stdout, capture_output=True,
             )

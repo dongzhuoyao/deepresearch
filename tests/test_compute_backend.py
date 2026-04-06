@@ -122,6 +122,7 @@ def test_abstract_methods():
 
 def test_find_ssh_key(tmp_path):
     """_find_ssh_key returns the first matching key."""
+    _find_ssh_key.cache_clear()
     ssh_dir = tmp_path / ".ssh"
     ssh_dir.mkdir()
     key = ssh_dir / "id_ed25519"
@@ -129,10 +130,12 @@ def test_find_ssh_key(tmp_path):
     with patch("sibyl.compute.runpod_backend.Path.home", return_value=tmp_path):
         result = _find_ssh_key()
     assert result == str(key)
+    _find_ssh_key.cache_clear()
 
 
 def test_find_ssh_key_fallback_rsa(tmp_path):
     """Falls back to id_rsa when ed25519 is absent."""
+    _find_ssh_key.cache_clear()
     ssh_dir = tmp_path / ".ssh"
     ssh_dir.mkdir()
     key = ssh_dir / "id_rsa"
@@ -140,15 +143,18 @@ def test_find_ssh_key_fallback_rsa(tmp_path):
     with patch("sibyl.compute.runpod_backend.Path.home", return_value=tmp_path):
         result = _find_ssh_key()
     assert result == str(key)
+    _find_ssh_key.cache_clear()
 
 
 def test_find_ssh_key_none(tmp_path):
     """Returns None when no keys exist."""
+    _find_ssh_key.cache_clear()
     ssh_dir = tmp_path / ".ssh"
     ssh_dir.mkdir()
     with patch("sibyl.compute.runpod_backend.Path.home", return_value=tmp_path):
         result = _find_ssh_key()
     assert result is None
+    _find_ssh_key.cache_clear()
 
 
 # --- get_pod_ssh_info ---
