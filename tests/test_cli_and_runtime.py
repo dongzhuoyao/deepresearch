@@ -1,13 +1,13 @@
 """Tests for CLI, runtime assets, and LaTeX pipeline."""
 import json
 from pathlib import Path
-from sibyl.runtime_assets import setup_workspace_assets, update_gitignore
-from sibyl.latex_pipeline import markdown_to_latex, _escape_latex, _convert_body
-from sibyl.lark_sync import sync_to_lark, is_sync_enabled
-from sibyl.lark_markdown_converter import markdown_to_lark_blocks
-from sibyl.orchestration.cli_core import resolve_workspace, find_workspaces
-from sibyl.config import Config
-from sibyl.workspace import Workspace
+from tao.runtime_assets import setup_workspace_assets, update_gitignore
+from tao.latex_pipeline import markdown_to_latex, _escape_latex, _convert_body
+from tao.lark_sync import sync_to_lark, is_sync_enabled
+from tao.lark_markdown_converter import markdown_to_lark_blocks
+from tao.orchestration.cli_core import resolve_workspace, find_workspaces
+from tao.config import Config
+from tao.workspace import Workspace
 
 
 class TestRuntimeAssets:
@@ -17,7 +17,7 @@ class TestRuntimeAssets:
         setup_workspace_assets(tmp_path, Config())
         assert (tmp_path / "CLAUDE.md").exists()
         assert (tmp_path / ".claude").is_dir()
-        assert (tmp_path / ".sibyl" / "project" / "overlays").is_dir()
+        assert (tmp_path / ".tao" / "project" / "overlays").is_dir()
         content = (tmp_path / "CLAUDE.md").read_text()
         assert "test topic" in content
 
@@ -48,7 +48,7 @@ class TestLatexPipeline:
         assert "\\maketitle" in latex
 
     def test_compile_pdf_no_file(self, tmp_path):
-        from sibyl.latex_pipeline import compile_pdf
+        from tao.latex_pipeline import compile_pdf
         result = compile_pdf(tmp_path)
         assert result["success"] is False
 

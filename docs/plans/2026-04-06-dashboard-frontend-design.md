@@ -2,7 +2,7 @@
 
 ## Overview
 
-Single HTML file dashboard for Sibyl Research System. Paper-themed aesthetic (warm ivory, serif headings, burgundy accents). Served by Flask, no build step.
+Single HTML file dashboard for Tao Research System. Paper-themed aesthetic (warm ivory, serif headings, burgundy accents). Served by Flask, no build step.
 
 ## Layout
 

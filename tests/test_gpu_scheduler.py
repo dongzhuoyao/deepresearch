@@ -1,7 +1,7 @@
 """Tests for GPU scheduler."""
 import json
 from pathlib import Path
-from sibyl.gpu_scheduler import (
+from tao.gpu_scheduler import (
     load_task_plan, load_gpu_progress, save_gpu_progress,
     topological_sort, get_ready_tasks, get_next_batch,
     register_running_tasks, mark_task_completed,

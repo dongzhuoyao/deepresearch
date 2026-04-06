@@ -4,10 +4,10 @@ import subprocess
 import sys
 from unittest.mock import patch, MagicMock
 import pytest
-from sibyl.compute.base import ComputeBackend
-from sibyl.compute.runpod_backend import RunPodBackend, _find_ssh_key
-from sibyl.compute import get_backend
-from sibyl.config import Config
+from tao.compute.base import ComputeBackend
+from tao.compute.runpod_backend import RunPodBackend, _find_ssh_key
+from tao.compute import get_backend
+from tao.config import Config
 
 
 def test_backend_type():
@@ -127,7 +127,7 @@ def test_find_ssh_key(tmp_path):
     ssh_dir.mkdir()
     key = ssh_dir / "id_ed25519"
     key.write_text("fake-key")
-    with patch("sibyl.compute.runpod_backend.Path.home", return_value=tmp_path):
+    with patch("tao.compute.runpod_backend.Path.home", return_value=tmp_path):
         result = _find_ssh_key()
     assert result == str(key)
     _find_ssh_key.cache_clear()
@@ -140,7 +140,7 @@ def test_find_ssh_key_fallback_rsa(tmp_path):
     ssh_dir.mkdir()
     key = ssh_dir / "id_rsa"
     key.write_text("fake-key")
-    with patch("sibyl.compute.runpod_backend.Path.home", return_value=tmp_path):
+    with patch("tao.compute.runpod_backend.Path.home", return_value=tmp_path):
         result = _find_ssh_key()
     assert result == str(key)
     _find_ssh_key.cache_clear()
@@ -151,7 +151,7 @@ def test_find_ssh_key_none(tmp_path):
     _find_ssh_key.cache_clear()
     ssh_dir = tmp_path / ".ssh"
     ssh_dir.mkdir()
-    with patch("sibyl.compute.runpod_backend.Path.home", return_value=tmp_path):
+    with patch("tao.compute.runpod_backend.Path.home", return_value=tmp_path):
         result = _find_ssh_key()
     assert result is None
     _find_ssh_key.cache_clear()
@@ -256,7 +256,7 @@ def test_wait_for_ready_becomes_ready():
         {"runtime": {"uptimeInSeconds": 5}, "desiredStatus": "RUNNING"},
     ]
     with patch.dict(sys.modules, {"runpod": mock_runpod}), \
-         patch("sibyl.compute.runpod_backend.time.sleep"):
+         patch("tao.compute.runpod_backend.time.sleep"):
         assert backend.wait_for_ready("pod-2", timeout_sec=300, poll_sec=1) is True
 
 
@@ -279,8 +279,8 @@ def test_wait_for_ready_timeout():
     mock_runpod = MagicMock()
     mock_runpod.get_pod.return_value = {"runtime": None, "desiredStatus": "RUNNING"}
     with patch.dict(sys.modules, {"runpod": mock_runpod}), \
-         patch("sibyl.compute.runpod_backend.time.sleep"), \
-         patch("sibyl.compute.runpod_backend.time.time", side_effect=[0, 0, 999]):
+         patch("tao.compute.runpod_backend.time.sleep"), \
+         patch("tao.compute.runpod_backend.time.time", side_effect=[0, 0, 999]):
         assert backend.wait_for_ready("pod-4", timeout_sec=10, poll_sec=1) is False
 
 
@@ -301,7 +301,7 @@ def test_run_remote_success():
     mock_result.stderr = ""
     mock_result.returncode = 0
     with patch.object(backend, "get_pod_ssh_info", return_value=mock_ssh_info), \
-         patch("sibyl.compute.runpod_backend.subprocess.run", return_value=mock_result) as mock_run:
+         patch("tao.compute.runpod_backend.subprocess.run", return_value=mock_result) as mock_run:
         result = backend.run_remote("pod-1", "nvidia-smi")
     assert result["stdout"] == "GPU 0: A100\n"
     assert result["returncode"] == 0
@@ -323,7 +323,7 @@ def test_run_remote_timeout():
         "ssh_key": None, "mode": "basic",
     }
     with patch.object(backend, "get_pod_ssh_info", return_value=mock_ssh_info), \
-         patch("sibyl.compute.runpod_backend.subprocess.run",
+         patch("tao.compute.runpod_backend.subprocess.run",
                side_effect=subprocess.TimeoutExpired(cmd="ssh", timeout=600)):
         result = backend.run_remote("pod-1", "long-running-cmd")
     assert result["returncode"] == -1

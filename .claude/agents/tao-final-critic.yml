@@ -1,0 +1,3 @@
+name: tao-final-critic
+model: claude-opus-4-6
+description: Final paper quality scorer (0-10 scale)

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Session start hook — restore pending work and restart daemons
 
-echo "Sibyl Research System — session initialized"
+echo "Tao Research System — session initialized"
 
 # Check for active workspaces
 if [ -d "workspaces" ]; then

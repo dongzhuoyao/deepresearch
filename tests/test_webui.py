@@ -1,11 +1,11 @@
 """Tests for dashboard and WebUI modules."""
 import json
 from pathlib import Path
-from sibyl.orchestration.dashboard_data import get_dashboard_data, list_all_projects
-from sibyl.webui.control_api import pause_project, resume_project, stop_project
-from sibyl.webui.monitor_api import get_experiment_status
-from sibyl.webui.session_registry import SessionRegistry
-from sibyl.workspace import Workspace
+from tao.orchestration.dashboard_data import get_dashboard_data, list_all_projects
+from tao.webui.control_api import pause_project, resume_project, stop_project
+from tao.webui.monitor_api import get_experiment_status
+from tao.webui.session_registry import SessionRegistry
+from tao.workspace import Workspace
 
 
 class TestDashboardData:

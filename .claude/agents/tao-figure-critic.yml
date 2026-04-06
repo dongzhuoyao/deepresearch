@@ -1,0 +1,3 @@
+name: tao-figure-critic
+model: claude-sonnet-4-6
+description: Critique figure content, style, and readability — enforce no text-element overlap, clear labeling, and publication-quality standards

@@ -1,18 +1,18 @@
 """Tests for action builders."""
-from sibyl.config import Config
-from sibyl.orchestration.simple_actions import (
+from tao.config import Config
+from tao.orchestration.simple_actions import (
     build_literature_search, build_planning, build_idea_validation,
     build_experiment_decision, build_writing_outline, build_writing_final_review,
     build_writing_latex, build_reflection, build_quality_gate,
 )
-from sibyl.orchestration.team_actions import (
+from tao.orchestration.team_actions import (
     build_idea_debate, build_result_debate, build_writing_integrate, build_review,
 )
-from sibyl.orchestration.experiment_actions import (
+from tao.orchestration.experiment_actions import (
     build_pilot_experiments, build_experiment_cycle,
 )
-from sibyl.orchestration.writing_artifacts import build_writing_sections
-from sibyl.orchestration.review_artifacts import build_novelty_check, build_simulated_review
+from tao.orchestration.writing_artifacts import build_writing_sections
+from tao.orchestration.review_artifacts import build_novelty_check, build_simulated_review
 
 
 class TestSimpleActions:
@@ -60,7 +60,7 @@ class TestTeamActions:
         action = build_idea_debate(Config())
         assert action.action_type == "team"
         assert len(action.team["agents"]) == 6
-        assert action.team["post_steps"][0]["skill"] == "sibyl-synthesizer"
+        assert action.team["post_steps"][0]["skill"] == "tao-synthesizer"
 
     def test_result_debate(self):
         action = build_result_debate(Config())

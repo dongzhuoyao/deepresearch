@@ -1,9 +1,9 @@
 """Tests for pipeline state machine."""
 import json
 
-from sibyl.orchestration.state_machine import StateMachine
-from sibyl.workspace import Workspace
-from sibyl.config import Config
+from tao.orchestration.state_machine import StateMachine
+from tao.workspace import Workspace
+from tao.config import Config
 
 
 def _make_sm(tmp_path, **config_overrides) -> StateMachine:
@@ -59,7 +59,7 @@ class TestPivotLogic:
         sm = _make_sm(tmp_path, idea_exp_cycles=1)
         # Simulate 1 prior visit
         ws = sm._ws
-        from sibyl.event_logger import log_event
+        from tao.event_logger import log_event
 
         log_event(
             ws.active_root / "logs",
@@ -104,7 +104,7 @@ class TestValidationLogic:
     def test_validation_exhausted(self, tmp_path):
         sm = _make_sm(tmp_path, idea_validation_rounds=1)
         ws = sm._ws
-        from sibyl.event_logger import log_event
+        from tao.event_logger import log_event
 
         log_event(
             ws.active_root / "logs",
@@ -131,7 +131,7 @@ class TestWritingRevision:
     def test_low_score_exhausted(self, tmp_path):
         sm = _make_sm(tmp_path, writing_revision_rounds=1)
         ws = sm._ws
-        from sibyl.event_logger import log_event
+        from tao.event_logger import log_event
 
         log_event(
             ws.active_root / "logs",

@@ -24,7 +24,7 @@ import sys
 import time
 from pathlib import Path
 
-# Ensure sibyl is importable
+# Ensure tao is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
@@ -44,7 +44,7 @@ EXPERIMENT_TIMEOUT = 300  # 5 min max for training
 # ---------------------------------------------------------------------------
 
 TRAIN_SCRIPT = r'''#!/usr/bin/env python3
-"""MNIST CNN — demo experiment for Sibyl pipeline validation."""
+"""MNIST CNN — demo experiment for Tao pipeline validation."""
 import json
 import os
 import time
@@ -142,7 +142,7 @@ for epoch in range(1, EPOCHS + 1):
     elapsed = time.time() - start_time
     print(f"Epoch {epoch}/{EPOCHS} — loss={avg_loss:.4f} train_acc={train_acc:.4f} test_acc={test_acc:.4f} elapsed={elapsed:.1f}s")
 
-    # Write progress file (Sibyl protocol)
+    # Write progress file (Tao protocol)
     progress = {
         "task_id": TASK_ID,
         "epoch": epoch,
@@ -178,7 +178,7 @@ print(f"\n[{TASK_ID}] Training complete: test_acc={test_acc:.4f} in {total_time:
 with open(os.path.join(RESULTS_DIR, f"{TASK_ID}_result.json"), "w") as f:
     json.dump(results, f, indent=2)
 
-# Write DONE marker (Sibyl protocol)
+# Write DONE marker (Tao protocol)
 with open(os.path.join(RESULTS_DIR, f"{TASK_ID}_DONE"), "w") as f:
     json.dump(results, f, indent=2)
 
@@ -251,7 +251,7 @@ def create_pod(gpu_type: str) -> dict:
 
     log(f"Creating pod with {gpu_type}...")
     pod = runpod.create_pod(
-        name="sibyl-demo-mnist",
+        name="tao-demo-mnist",
         image_name=IMAGE,
         gpu_type_id=gpu_type,
         gpu_count=1,
@@ -317,7 +317,7 @@ def wait_for_ready(pod_id: str) -> dict:
 def upload_and_run(ssh_host: str, ssh_port: int) -> None:
     """Step 3+4: Upload training script and run it."""
     # Write training script to temp file
-    tmp_script = "/tmp/sibyl_mnist_train.py"
+    tmp_script = "/tmp/tao_mnist_train.py"
     with open(tmp_script, "w") as f:
         f.write(TRAIN_SCRIPT)
 
@@ -461,7 +461,7 @@ def terminate_pod(pod_id: str) -> None:
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Sibyl Demo Experiment — MNIST CNN on RunPod")
+    parser = argparse.ArgumentParser(description="Tao Demo Experiment — MNIST CNN on RunPod")
     parser.add_argument("--gpu", default=DEFAULT_GPU, help=f"GPU type (default: {DEFAULT_GPU})")
     parser.add_argument("--keep-pod", action="store_true", help="Don't terminate pod after experiment")
     parser.add_argument("--output-dir", default="workspaces/demo_results", help="Local results directory")

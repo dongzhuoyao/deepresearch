@@ -15,5 +15,5 @@ allowed-tools: ["Bash", "Read"]
 3. Display: stage, iteration, quality score, running experiments, errors.
 
 ```bash
-.venv/bin/python3 -c "from sibyl.orchestrate import cli_status; print(cli_status('$ARGUMENTS' or '.'))"
+.venv/bin/python3 -c "from tao.orchestrate import cli_status; print(cli_status('$ARGUMENTS' or '.'))"
 ```

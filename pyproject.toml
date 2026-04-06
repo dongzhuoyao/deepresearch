@@ -1,7 +1,7 @@
 [project]
 name = "deepresearch"
 version = "1.0.0"
-description = "Sibyl Research System — Autonomous AI Scientist (RunPod Native)"
+description = "Tao Research System — Autonomous AI Scientist (RunPod Native)"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0",
@@ -25,11 +25,11 @@ dev = [
 ]
 
 [project.scripts]
-sibyl = "sibyl.cli:main"
-deepresearch = "sibyl.cli:main"
+tao = "tao.cli:main"
+deepresearch = "tao.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["sibyl"]
+packages = ["tao"]
 
 [build-system]
 requires = ["hatchling"]

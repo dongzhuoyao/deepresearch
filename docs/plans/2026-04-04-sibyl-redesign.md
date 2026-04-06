@@ -1,4 +1,4 @@
-# Sibyl-Style Full Redesign — Implementation Plan
+# Tao-Style Full Redesign — Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -128,7 +128,7 @@ mkdir -p tests
 
 ```python
 # sibyl/__init__.py
-"""Sibyl Research System — Autonomous AI Scientist."""
+"""Tao Research System — Autonomous AI Scientist."""
 __version__ = "1.0.0"
 ```
 
@@ -140,7 +140,7 @@ Create empty `__init__.py` in each sub-package.
 [project]
 name = "deepresearch"
 version = "1.0.0"
-description = "Sibyl Research System — Autonomous AI Scientist (RunPod Native)"
+description = "Tao Research System — Autonomous AI Scientist (RunPod Native)"
 requires-python = ">=3.11"
 dependencies = [
     "pyyaml>=6.0",
@@ -497,7 +497,7 @@ class Config:
 **Step 2:** Write config.example.yaml
 
 ```yaml
-# DeepResearch (Sibyl Architecture) — Project Configuration
+# DeepResearch (Tao Architecture) — Project Configuration
 
 language: en
 
@@ -589,7 +589,7 @@ from pathlib import Path
 import os
 
 def sibyl_root() -> Path:
-    """Return the Sibyl system root (repo checkout)."""
+    """Return the Tao system root (repo checkout)."""
     env = os.environ.get("SIBYL_ROOT")
     if env:
         return Path(env).resolve()
@@ -1305,11 +1305,11 @@ Each agent YAML specifies: name, model, description, system prompt reference.
 - Create: `.claude/skills/` directory with skill markdown files
 
 Define 40+ specialized skills as `context: fork` subagents:
-- Literature & Ideas: sibyl-literature, sibyl-innovator, sibyl-pragmatist, etc.
-- Planning & Experiments: sibyl-planner, sibyl-experimenter
-- Writing: sibyl-outline-writer, sibyl-section-writer, sibyl-editor, etc.
-- Analysis: sibyl-critic, sibyl-reflection
-- Rebuttal: sibyl-rebuttal-strategist, sibyl-rebuttal-writer, etc.
+- Literature & Ideas: tao-literature, tao-innovator, tao-pragmatist, etc.
+- Planning & Experiments: tao-planner, tao-experimenter
+- Writing: tao-outline-writer, tao-section-writer, tao-editor, etc.
+- Analysis: tao-critic, tao-reflection
+- Rebuttal: tao-rebuttal-strategist, tao-rebuttal-writer, etc.
 
 Each skill contains the dynamically-loaded prompt via shebang call to `render_skill_prompt()`.
 

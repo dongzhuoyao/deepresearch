@@ -3,32 +3,32 @@ import json
 import tempfile
 from pathlib import Path
 
-from sibyl._paths import sibyl_root, system_data_dir, prompts_dir, global_config_path
-from sibyl.event_logger import log_event, read_events
-from sibyl.error_collector import collect_error, read_errors, clear_errors
+from tao._paths import tao_root, system_data_dir, prompts_dir, global_config_path
+from tao.event_logger import log_event, read_events
+from tao.error_collector import collect_error, read_errors, clear_errors
 
 
 class TestPaths:
-    def test_sibyl_root(self):
-        root = sibyl_root()
+    def test_tao_root(self):
+        root = tao_root()
         assert root.is_dir()
-        # Should contain the sibyl package
-        assert (root / "sibyl").is_dir() or (root / "pyproject.toml").exists()
+        # Should contain the tao package
+        assert (root / "tao").is_dir() or (root / "pyproject.toml").exists()
 
     def test_system_data_dir(self):
         d = system_data_dir()
-        assert str(d).endswith(".sibyl")
+        assert str(d).endswith(".tao")
         assert d.parent == Path.home()
 
     def test_prompts_dir(self):
         d = prompts_dir()
         assert d.name == "prompts"
-        assert d.parent.name == "sibyl"
+        assert d.parent.name == "tao"
 
     def test_global_config_path(self):
         p = global_config_path()
         assert p.name == "config.yaml"
-        assert ".sibyl" in str(p)
+        assert ".tao" in str(p)
 
 
 class TestEventLogger:

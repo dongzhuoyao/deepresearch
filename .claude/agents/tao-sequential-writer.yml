@@ -1,0 +1,3 @@
+name: tao-sequential-writer
+model: claude-opus-4-6
+description: Writes all sections in order

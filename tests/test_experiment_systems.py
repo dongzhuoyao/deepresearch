@@ -1,14 +1,14 @@
 """Tests for experiment recovery, records, and digest."""
 import json
 from pathlib import Path
-from sibyl.experiment_recovery import (
+from tao.experiment_recovery import (
     ExperimentState, load_experiment_state, save_experiment_state,
     register_dispatched_tasks, mark_task_done, mark_task_dead,
     sync_completed_from_progress, generate_detection_script,
     get_experiment_summary,
 )
-from sibyl.experiment_records import record_experiment, load_experiments, get_best_result
-from sibyl.experiment_digest import generate_digest
+from tao.experiment_records import record_experiment, load_experiments, get_best_result
+from tao.experiment_digest import generate_digest
 
 
 class TestExperimentState:

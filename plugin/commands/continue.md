@@ -12,7 +12,7 @@ allowed-tools: ["Bash", "Read", "Write", "Agent"]
 
 1. Read current status and determine where we left off:
    ```bash
-   .venv/bin/python3 -c "from sibyl.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
+   .venv/bin/python3 -c "from tao.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
    ```
 
 2. Resume the orchestration loop from the current stage.

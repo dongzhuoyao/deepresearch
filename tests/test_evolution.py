@@ -1,13 +1,13 @@
 """Tests for reflection and evolution."""
 import time
-from sibyl.reflection import (
+from tao.reflection import (
     log_iteration, load_iteration_log, get_quality_trajectory, assess_trajectory,
 )
-from sibyl.evolution import (
+from tao.evolution import (
     IssueCategory, normalize_issue_entry, compute_effectiveness,
     generate_agent_overlay, log_evolution_event, load_evolution_log,
 )
-from sibyl.orchestration.reflection_postprocess import run_post_reflection_hook
+from tao.orchestration.reflection_postprocess import run_post_reflection_hook
 
 
 class TestReflection:

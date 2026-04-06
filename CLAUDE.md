@@ -1,11 +1,11 @@
-# DeepResearch (Sibyl Architecture)
+# DeepResearch (Tao Architecture)
 
 Autonomous AI Research System -- from idea to paper, zero human intervention. RunPod-native compute.
 
 ## Project Structure
 
 ```
-sibyl/                      # Main package
+tao/                        # Main package
 ├── __init__.py
 ├── _paths.py               # Path resolution
 ├── config.py               # YAML-based configuration
@@ -61,17 +61,17 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # CLI
-sibyl status .
-sibyl init "research topic"
-sibyl experiment-status .
-sibyl dispatch .
-sibyl evolve . --show
-sibyl self-heal-scan .
-sibyl latex-compile .
-sibyl dashboard .
+tao status .
+tao init "research topic"
+tao experiment-status .
+tao dispatch .
+tao evolve . --show
+tao self-heal-scan .
+tao latex-compile .
+tao dashboard .
 
 # Run demo
-python -m sibyl.demo
+python -m tao.demo
 ```
 
 ## Pipeline (18 stages)
@@ -98,7 +98,7 @@ init -> literature_search -> idea_debate -> planning -> pilot_experiments
 ```bash
 RUNPOD_API_KEY=...
 ANTHROPIC_API_KEY=...
-SIBYL_ROOT=...  # optional: override repo root detection
+TAO_ROOT=...  # optional: override repo root detection
 ```
 
 ## Config
@@ -112,11 +112,11 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 
 ## Development
 
-- Old Python-only pipeline preserved on `python` branch (pre-Sibyl architecture)
+- Old Python-only pipeline preserved on `python` branch (pre-Tao architecture)
 - Reference architecture: github.com/Sibyl-Research-Team/AutoResearch-SibylSystem
-- Package is `sibyl/` (top-level, not under `src/`)
+- Package is `tao/` (top-level, not under `src/`)
 - Tests: `pytest tests/ -v` — 280 tests, all run in <0.3s (no API calls)
-- Demo: `python -m sibyl.demo` — dry-run of full 18-stage pipeline
+- Demo: `python -m tao.demo` — dry-run of full 18-stage pipeline
 - Plugin dev: `claude --plugin-dir ./plugin --dangerously-skip-permissions`
 - Agent defs: `.claude/agents/*.yml` (YAML with name, model, description)
 - Skill defs: `.claude/skills/*.md` (markdown with shebang to render_skill_prompt)

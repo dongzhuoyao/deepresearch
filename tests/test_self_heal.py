@@ -1,7 +1,7 @@
 """Tests for auto-fix and self-healing."""
-from sibyl.auto_fix import try_auto_fix, _extract_module_name, _module_to_pip
-from sibyl.self_heal import SelfHealRouter, SKILL_ROUTE_TABLE, CATEGORY_PRIORITY
-from sibyl.error_collector import collect_error
+from tao.auto_fix import try_auto_fix, _extract_module_name, _module_to_pip
+from tao.self_heal import SelfHealRouter, SKILL_ROUTE_TABLE, CATEGORY_PRIORITY
+from tao.error_collector import collect_error
 
 
 class TestAutoFix:

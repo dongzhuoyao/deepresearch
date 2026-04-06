@@ -1,11 +1,11 @@
 """Tests for the main orchestrator."""
 import json
 from pathlib import Path
-from sibyl.orchestrate import (
+from tao.orchestrate import (
     FarsOrchestrator, cli_next, cli_record, cli_status,
     cli_init, cli_init_from_spec, _topic_to_name,
 )
-from sibyl.config import Config
+from tao.config import Config
 
 
 class TestFarsOrchestrator:

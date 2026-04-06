@@ -2,7 +2,7 @@
 
 **Usage:** `/init [topic or spec.md path]`
 
-Initialize a new Sibyl research project. The argument can be either a plain topic string or a path to a spec `.md` file.
+Initialize a new Tao research project. The argument can be either a plain topic string or a path to a spec `.md` file.
 
 ## Steps
 

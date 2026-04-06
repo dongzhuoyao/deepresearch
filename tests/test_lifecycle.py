@@ -1,9 +1,9 @@
 """Tests for lifecycle and action dispatcher."""
-from sibyl.orchestration.lifecycle import Lifecycle
-from sibyl.orchestration.action_dispatcher import render_execution_script
-from sibyl.orchestration.models import Action
-from sibyl.workspace import Workspace
-from sibyl.config import Config
+from tao.orchestration.lifecycle import Lifecycle
+from tao.orchestration.action_dispatcher import render_execution_script
+from tao.orchestration.models import Action
+from tao.workspace import Workspace
+from tao.config import Config
 
 
 def _make_lifecycle(tmp_path, **overrides) -> Lifecycle:
@@ -80,12 +80,12 @@ class TestActionDispatcher:
     def test_render_skill(self):
         action = Action(
             action_type="skill",
-            skills=[{"name": "sibyl-literature", "description": "Search papers"}],
+            skills=[{"name": "tao-literature", "description": "Search papers"}],
             stage="literature_search",
             iteration=1,
         )
         script = render_execution_script(action)
-        assert "sibyl-literature" in script
+        assert "tao-literature" in script
         assert "literature_search" in script
         assert action.execution_script == script
 
@@ -112,11 +112,11 @@ class TestActionDispatcher:
     def test_render_bash(self):
         action = Action(
             action_type="bash",
-            bash_command="sibyl latex-compile .",
+            bash_command="tao latex-compile .",
             stage="writing_latex",
         )
         script = render_execution_script(action)
-        assert "sibyl latex-compile" in script
+        assert "tao latex-compile" in script
 
     def test_render_skills_parallel(self):
         action = Action(

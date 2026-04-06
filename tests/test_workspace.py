@@ -1,8 +1,8 @@
 """Tests for workspace management."""
 import json
 from pathlib import Path
-from sibyl.workspace import Workspace, WorkspaceStatus
-from sibyl.orchestration.workspace_paths import (
+from tao.workspace import Workspace, WorkspaceStatus
+from tao.orchestration.workspace_paths import (
     resolve_active_root, ensure_workspace_dirs,
 )
 

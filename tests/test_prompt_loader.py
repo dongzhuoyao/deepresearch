@@ -1,14 +1,14 @@
 """Tests for prompt loader and context builder."""
-from sibyl.orchestration.prompt_loader import (
+from tao.orchestration.prompt_loader import (
     load_prompt, load_shared_prompt, compile_prompt, compile_team_prompt,
     _research_focus_directive,
 )
-from sibyl.orchestration.context_builder import (
+from tao.orchestration.context_builder import (
     build_context, gather_workspace_context,
 )
-from sibyl.orchestra_skills import scan_skills, format_skills_index, build_skills_section
-from sibyl.workspace import Workspace
-from sibyl.config import Config
+from tao.orchestra_skills import scan_skills, format_skills_index, build_skills_section
+from tao.workspace import Workspace
+from tao.config import Config
 
 
 class TestPromptLoader:
@@ -35,7 +35,7 @@ class TestPromptLoader:
     def test_compile_with_overlay(self, tmp_path):
         ws = Workspace(tmp_path, iteration_dirs=False)
         ws.init_project("test")
-        ws.write_file(".sibyl/project/overlays/innovator.md", "## Lessons\n- Focus on efficiency")
+        ws.write_file(".tao/project/overlays/innovator.md", "## Lessons\n- Focus on efficiency")
         cfg = Config()
         prompt = compile_prompt("innovator", ws, cfg)
         assert "Focus on efficiency" in prompt
@@ -43,7 +43,7 @@ class TestPromptLoader:
     def test_compile_with_memory(self, tmp_path):
         ws = Workspace(tmp_path, iteration_dirs=False)
         ws.init_project("test")
-        ws.write_file(".sibyl/project/memory.md", "Prior work showed X works best")
+        ws.write_file(".tao/project/memory.md", "Prior work showed X works best")
         cfg = Config()
         prompt = compile_prompt("innovator", ws, cfg)
         assert "Prior work showed X works best" in prompt

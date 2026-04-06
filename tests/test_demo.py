@@ -1,5 +1,5 @@
 """Tests for demo smoke test."""
-from sibyl.demo import run_demo
+from tao.demo import run_demo
 
 
 def test_demo_runs(tmp_path):

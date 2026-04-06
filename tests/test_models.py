@@ -1,6 +1,6 @@
 """Tests for orchestration models and constants."""
-from sibyl.orchestration.models import Action, AgentTask
-from sibyl.orchestration.constants import (
+from tao.orchestration.models import Action, AgentTask
+from tao.orchestration.constants import (
     PIPELINE_STAGES, PAPER_SECTIONS, CHECKPOINT_DIRS, SYNC_SKIP_STAGES,
 )
 

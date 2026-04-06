@@ -12,7 +12,7 @@ allowed-tools: ["Bash", "Read", "Write", "Agent"]
 
 1. Read workspace status:
    ```bash
-   .venv/bin/python3 -c "from sibyl.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
+   .venv/bin/python3 -c "from tao.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
    ```
 
 2. Enter the orchestration loop:

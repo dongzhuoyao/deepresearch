@@ -1,4 +1,4 @@
-# DeepResearch (Sibyl Architecture)
+# DeepResearch (Tao Architecture)
 
 Autonomous AI Research System that takes a research topic and produces a complete academic paper -- literature review, novel idea generation, experiment design, GPU-based execution, statistical analysis, and LaTeX compilation -- with zero human intervention.
 
@@ -76,7 +76,7 @@ cp config.example.yaml config.yaml
 ### 3. Initialize a Research Project
 
 ```bash
-sibyl init "Improving chain-of-thought reasoning with self-consistency"
+tao init "Improving chain-of-thought reasoning with self-consistency"
 ```
 
 This creates a workspace directory under `workspaces/` with the topic, config, and initial state files.
@@ -108,9 +108,9 @@ Use the slash commands directly in any Claude Code session (no plugin flag neede
 Or use the CLI for monitoring:
 
 ```bash
-sibyl status ./workspaces/your_project
-sibyl experiment-status ./workspaces/your_project
-sibyl dashboard ./workspaces/your_project
+tao status ./workspaces/your_project
+tao experiment-status ./workspaces/your_project
+tao dashboard ./workspaces/your_project
 ```
 
 ## Configuration Reference
@@ -169,11 +169,11 @@ The system has a three-tier error recovery strategy:
 ## Project Structure
 
 ```
-sibyl/                      # Main Python package
+tao/                        # Main Python package
 ├── orchestrate.py          # FarsOrchestrator (main API)
 ├── workspace.py            # Filesystem communication hub
 ├── config.py               # YAML config with defaults
-├── cli.py                  # Typer CLI (sibyl command)
+├── cli.py                  # Typer CLI (tao command)
 ├── compute/                # RunPod compute backend
 ├── orchestration/          # State machine, lifecycle, action dispatch
 ├── gpu_scheduler.py        # Parallel task scheduling
@@ -208,13 +208,13 @@ pip install -e ".[dev]"
 pytest tests/ -v
 
 # Type check
-mypy sibyl
+mypy tao
 
 # Lint
-ruff check sibyl
+ruff check tao
 
 # Run demo (no API keys needed)
-python -m sibyl.demo
+python -m tao.demo
 ```
 
 ## Tech Stack

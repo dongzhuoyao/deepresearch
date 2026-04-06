@@ -1,17 +1,17 @@
 """Tests for rebuttal pipeline."""
 import json
-from sibyl.rebuttal.constants import REBUTTAL_STAGES
-from sibyl.rebuttal.config import RebuttalConfig
-from sibyl.rebuttal.state_machine import RebuttalStateMachine
-from sibyl.rebuttal.scoring import compute_rebuttal_score, track_score_trajectory
-from sibyl.rebuttal.workspace_setup import setup_rebuttal_workspace
-from sibyl.rebuttal.prompt_helpers import format_review_context, format_rebuttal_prompt
-from sibyl.rebuttal.actions import (
+from tao.rebuttal.constants import REBUTTAL_STAGES
+from tao.rebuttal.config import RebuttalConfig
+from tao.rebuttal.state_machine import RebuttalStateMachine
+from tao.rebuttal.scoring import compute_rebuttal_score, track_score_trajectory
+from tao.rebuttal.workspace_setup import setup_rebuttal_workspace
+from tao.rebuttal.prompt_helpers import format_review_context, format_rebuttal_prompt
+from tao.rebuttal.actions import (
     build_parse_reviews, build_strategy, build_rebuttal_draft,
     build_simulated_review, build_final_synthesis,
 )
-from sibyl.rebuttal.orchestrator import RebuttalOrchestrator
-from sibyl.rebuttal.cli import cli_rebuttal_init, cli_rebuttal_status
+from tao.rebuttal.orchestrator import RebuttalOrchestrator
+from tao.rebuttal.cli import cli_rebuttal_init, cli_rebuttal_status
 
 
 class TestRebuttalStateMachine:

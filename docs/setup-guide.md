@@ -1,6 +1,6 @@
 # Setup Guide
 
-Step-by-step instructions for getting the Sibyl Research System running.
+Step-by-step instructions for getting the Tao Research System running.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Verify installation
-sibyl --help
+tao --help
 ```
 
 This installs the core dependencies: PyYAML, Rich, Flask, RunPod SDK, Paramiko (SSH), and dev tools (pytest, ruff, mypy).
@@ -113,19 +113,19 @@ This gives agents direct access to arXiv search and paper retrieval during the l
 
 ```bash
 # Initialize a research project
-sibyl init "Improving few-shot learning with retrieval-augmented prompting"
+tao init "Improving few-shot learning with retrieval-augmented prompting"
 ```
 
 This creates a workspace directory under `workspaces/` containing:
 - `topic.txt` -- Your research topic
 - `config.yaml` -- Project configuration (copied from your config)
-- `.sibyl/system.json` -- Pipeline state (stage, iteration, scores)
+- `.tao/system.json` -- Pipeline state (stage, iteration, scores)
 - Directory structure for ideas, experiments, writing, and logs
 
 Verify the workspace was created:
 
 ```bash
-sibyl status workspaces/improving_fewshot_*
+tao status workspaces/improving_fewshot_*
 ```
 
 ## 7. Launch the Pipeline
@@ -160,9 +160,9 @@ While the pipeline runs, use these tools to monitor progress:
 
 ```bash
 # CLI monitoring (from another terminal)
-sibyl status ./
-sibyl experiment-status ./
-sibyl dashboard ./
+tao status ./
+tao experiment-status ./
+tao dashboard ./
 
 # Check experiment logs
 ls logs/
@@ -177,7 +177,7 @@ cat logs/experiment_records.jsonl
 - Try a different `runpod_gpu_type` or set `runpod_cloud_type: "ALL"`
 
 ### Pipeline stalls at a stage
-- Run `sibyl self-heal-scan .` to check for fixable errors
+- Run `tao self-heal-scan .` to check for fixable errors
 - Use `/debug` in Claude Code to diagnose
 - Check `logs/errors.jsonl` for error details
 

@@ -3,7 +3,7 @@ import os
 import tempfile
 import pytest
 from pathlib import Path
-from sibyl.config import Config, AgentConfig
+from tao.config import Config, AgentConfig
 
 
 def test_config_defaults():

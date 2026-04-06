@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MNIST CNN — demo experiment for Sibyl pipeline validation."""
+"""MNIST CNN — demo experiment for Tao pipeline validation."""
 import json
 import os
 import time
@@ -97,7 +97,7 @@ for epoch in range(1, EPOCHS + 1):
     elapsed = time.time() - start_time
     print(f"Epoch {epoch}/{EPOCHS} — loss={avg_loss:.4f} train_acc={train_acc:.4f} test_acc={test_acc:.4f} elapsed={elapsed:.1f}s")
 
-    # Write progress file (Sibyl protocol)
+    # Write progress file (Tao protocol)
     progress = {
         "task_id": TASK_ID,
         "epoch": epoch,
@@ -133,7 +133,7 @@ print(f"\n[{TASK_ID}] Training complete: test_acc={test_acc:.4f} in {total_time:
 with open(os.path.join(RESULTS_DIR, f"{TASK_ID}_result.json"), "w") as f:
     json.dump(results, f, indent=2)
 
-# Write DONE marker (Sibyl protocol)
+# Write DONE marker (Tao protocol)
 with open(os.path.join(RESULTS_DIR, f"{TASK_ID}_DONE"), "w") as f:
     json.dump(results, f, indent=2)
 
