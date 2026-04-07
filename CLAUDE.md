@@ -13,7 +13,7 @@ tao/                        # Main package
 ├── orchestrate.py          # Main orchestrator (FarsOrchestrator)
 ├── cli.py                  # Typer CLI
 ├── compute/                # Compute backends
-│   ├── base.py             # Abstract ComputeBackend (11 abstract methods)
+│   ├── base.py             # Abstract ComputeBackend (15 abstract methods)
 │   └── runpod_backend.py   # RunPod API + SSH (pod lifecycle, remote exec, file transfer)
 ├── orchestration/          # Pipeline orchestration
 │   ├── models.py           # Action, AgentTask dataclasses
@@ -29,13 +29,28 @@ tao/                        # Main package
 │   ├── writing_artifacts.py  # Writing action builders
 │   ├── review_artifacts.py   # Review action builders
 │   ├── reflection_postprocess.py # Post-reflection evolution hook
+│   ├── checkpointing.py     # Pipeline checkpoint/restore
+│   ├── config_helpers.py    # Config utilities
+│   ├── common_utils.py      # Shared orchestration helpers
+│   ├── workspace_paths.py   # Workspace path constants
 │   ├── dashboard_data.py   # Dashboard data generation
-│   └── cli_core.py         # CLI helpers
+│   ├── cli_core.py         # CLI helpers
+│   ├── runtime_cli.py      # Runtime CLI commands
+│   ├── project_cli.py      # Project management CLI
+│   ├── ops_cli.py          # Operations CLI
+│   └── migration_cli.py    # Migration utilities
 ├── gpu_scheduler.py        # Task parallelization, topological sort
 ├── experiment_recovery.py  # Crash detection, state sync
 ├── experiment_records.py   # JSONL experiment database
 ├── auto_fix.py             # Mechanical fixes (pip install, YAML)
 ├── self_heal.py            # Error routing, circuit breaker
+├── error_collector.py      # Error aggregation
+├── event_logger.py         # Structured event logging
+├── experiment_digest.py    # Experiment summary generation
+├── orchestra_skills.py     # External skill loading
+├── lark_sync.py            # Lark document sync
+├── lark_markdown_converter.py # Lark <-> Markdown conversion
+├── demo.py                 # Dry-run demo of full pipeline
 ├── reflection.py           # Iteration logging, quality trajectory
 ├── evolution.py            # Cross-project self-improvement
 ├── runtime_assets.py       # .claude/ setup, CLAUDE.md generation
@@ -113,6 +128,7 @@ TAO_ROOT=...  # optional: override repo root detection
 
 Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - `compute_backend: runpod` (always RunPod)
+- `runpod_image` — must match GPU arch (see Gotchas for Blackwell)
 - `runpod_gpu_type`, `runpod_max_pods`, `runpod_spot`
 - `research_focus: 1-5` (explore <-> deep focus)
 - `writing_mode: parallel|sequential|codex`
@@ -135,6 +151,7 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 
 ## Gotchas
 
+- **Blackwell GPU + PyTorch image** — RTX PRO 4500/5090/B100 (sm_120) need `runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04`; the default 2.4.0 image only supports up to sm_90 (Hopper). Wrong image → `CUDA error: no kernel image available`
 - **RunPod costs money** — terminate pods immediately when idle; prepare everything locally before spinning up a pod
 - **RunPod storage** — only `/workspace/` persists; files outside it are lost on pod restart
 - **Prefer GPU-light methods** — few-step fine-tune, LoRA, small models over heavy training runs
