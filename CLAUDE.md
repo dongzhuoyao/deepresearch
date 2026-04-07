@@ -121,13 +121,18 @@ TAO_ROOT=...  # optional: override repo root detection
 ## SSH / RunPod
 
 - Private key: `~/.ssh/id_ed25519`
+- Always use `cloud_type: SECURE` (never COMMUNITY)
+- Always use `template_id: runpod-torch-v240` — pre-cached image, boots in ~30s vs 10+ min
 - Web dashboard default port: 3000 (range 3000-3002)
 - RunPod storage: code and data go to `/workspace/` (persists across pod restarts)
+- Proxy SSH username is `podHostId` from API (not raw pod_id) — query `machine.podHostId`
 
 ## Config
 
 Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - `compute_backend: runpod` (always RunPod)
+- `runpod_template_id: runpod-torch-v240` (pre-cached, fast boot)
+- `runpod_cloud_type: SECURE` (always)
 - `runpod_image` — must match GPU arch (see Gotchas for Blackwell)
 - `runpod_gpu_type`, `runpod_max_pods`, `runpod_spot`
 - `research_focus: 1-5` (explore <-> deep focus)
@@ -156,3 +161,4 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - **RunPod storage** — only `/workspace/` persists; files outside it are lost on pod restart
 - **Prefer GPU-light methods** — few-step fine-tune, LoRA, small models over heavy training runs
 - **State machine** — check test_state_machine.py before modifying transitions
+- **RunPod image pull** — without `template_id`, image pulls take 10+ min even for the same image; always set `template_id` in config

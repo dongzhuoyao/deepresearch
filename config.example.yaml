@@ -10,6 +10,7 @@ compute_backend: runpod
 runpod_gpu_type: "NVIDIA A100 80GB PCIe"
 runpod_gpu_count: 1
 runpod_image: "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04"
+runpod_template_id: "runpod-torch-v240"  # pre-cached, boots in ~30s vs 10+ min
 runpod_volume_id: ""
 runpod_disk_gb: 50
 runpod_max_pods: 4

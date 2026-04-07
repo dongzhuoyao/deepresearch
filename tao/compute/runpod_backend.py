@@ -16,6 +16,24 @@ if TYPE_CHECKING:
 
 _SSH_KEY_CANDIDATES = ["id_ed25519", "id_rsa", "id_ecdsa"]
 
+# Blackwell GPUs (sm_120) need PyTorch 2.8 + CUDA 12.8
+_BLACKWELL_GPUS = {
+    "NVIDIA RTX PRO 4500 Blackwell",
+    "NVIDIA GeForce RTX 5080",
+    "NVIDIA GeForce RTX 5090",
+    "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+    "NVIDIA RTX PRO 6000 Blackwell Max-Q Workstation Edition",
+    "NVIDIA B200",
+    "NVIDIA B300 SXM6 AC",
+}
+
+# Template selection: always use template_id instead of image_name for fast boot
+_TEMPLATE_FOR_GPU = {
+    "default": "runpod-torch-v240",    # PyTorch 2.4 + CUDA 12.4 (pre-Blackwell)
+    "blackwell": "runpod-torch-v280",  # PyTorch 2.8 + CUDA 12.8 (Blackwell sm_120)
+}
+
 
 @lru_cache(maxsize=1)
 def _find_ssh_key() -> str | None:
@@ -59,12 +77,30 @@ class RunPodBackend(ComputeBackend):
     def env_cmd(self, project_name: str) -> str:
         return f"cd {self.project_dir(project_name)} &&"
 
+    def _resolve_template(self) -> str:
+        """Pick the right pre-cached template based on GPU type.
+
+        Always prefer template_id over image_name — templates are pre-cached
+        on RunPod nodes and boot in ~30-70s vs 10+ min for image pulls.
+        """
+        if self._config.runpod_template_id:
+            return self._config.runpod_template_id
+        gpu = self._config.runpod_gpu_type
+        if gpu in _BLACKWELL_GPUS:
+            return _TEMPLATE_FOR_GPU["blackwell"]
+        return _TEMPLATE_FOR_GPU["default"]
+
     def create_pod(self, name: str) -> dict:
-        """Create a RunPod GPU pod via the RunPod API."""
+        """Create a RunPod GPU pod via the RunPod API.
+
+        Uses pre-cached templates for fast boot (~30-70s).
+        Auto-selects template based on GPU type if not explicitly configured.
+        """
         runpod = self._runpod()
         if not self._api_key:
             raise ValueError("RUNPOD_API_KEY not set. Set it in config or environment.")
 
+        template_id = self._resolve_template()
         kwargs = {
             "name": name,
             "image_name": self._config.runpod_image,
@@ -73,11 +109,10 @@ class RunPodBackend(ComputeBackend):
             "volume_in_gb": self._config.runpod_disk_gb,
             "volume_mount_path": self._config.runpod_volume_mount,
             "cloud_type": self._config.runpod_cloud_type,
+            "template_id": template_id,
         }
         if self._config.runpod_volume_id:
             kwargs["network_volume_id"] = self._config.runpod_volume_id
-        if self._config.runpod_template_id:
-            kwargs["template_id"] = self._config.runpod_template_id
 
         pod = runpod.create_pod(**kwargs)
         return pod
@@ -122,10 +157,13 @@ class RunPodBackend(ComputeBackend):
             }
 
         # Fallback: basic SSH via RunPod proxy
+        # Username must be podHostId (podId + account suffix) from the API
+        machine = pod.get("machine") or {}
+        pod_host_id = machine.get("podHostId", pod_id)
         return {
             "host": "ssh.runpod.io",
             "port": 22,
-            "username": pod_id,
+            "username": pod_host_id,
             "ssh_key": self._ssh_key,
             "mode": "basic",
         }
@@ -147,14 +185,22 @@ class RunPodBackend(ComputeBackend):
         """Stop a RunPod pod (preserves volume, releases GPU)."""
         self._runpod().stop_pod(pod_id)
 
-    def wait_for_ready(self, pod_id: str, timeout_sec: int = 300, poll_sec: int = 5) -> bool:
-        """Block until pod is running and has a runtime. Returns True if ready."""
+    def wait_for_ready(self, pod_id: str, timeout_sec: int = 600, poll_sec: int = 15) -> bool:
+        """Block until pod is running and SSH is accessible. Returns True if ready.
+
+        Checks for: uptimeInSeconds > 0, or SSH port 22 in runtime ports.
+        Note: RunPod image pulls can take 5-10+ minutes for large images.
+        """
         runpod = self._runpod()
         deadline = time.time() + timeout_sec
         while time.time() < deadline:
             pod = runpod.get_pod(pod_id)
             runtime = pod.get("runtime") or {}
             if runtime.get("uptimeInSeconds", 0) > 0:
+                return True
+            # SSH port 22 in ports means container is fully up
+            ports = runtime.get("ports") or []
+            if any(p.get("privatePort") == 22 for p in ports):
                 return True
             status = pod.get("desiredStatus", "")
             if status in ("EXITED", "TERMINATED", "ERROR"):
