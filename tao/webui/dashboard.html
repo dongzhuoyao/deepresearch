@@ -767,7 +767,9 @@ function renderPipeline(currentStage, iteration) {
     html += '<div class="phase-stages">';
     phase.stages.forEach(stage => {
       const idx = PIPELINE_STAGES.indexOf(stage);
-      const status = idx < currentIdx ? "completed"
+      const isDone = currentStage === "done";
+      const status = isDone ? "completed"
+                   : idx < currentIdx ? "completed"
                    : idx === currentIdx ? "current"
                    : "future";
       const icon = status === "completed" ? "&#10003;" : "";
