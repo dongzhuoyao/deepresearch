@@ -18,6 +18,8 @@ Read the following workspace files:
 - `writing/paper_outline.json` — Original outline for structural reference.
 - `writing/critique/*.md` — Section critiques (if exists).
 - `supervisor/structural_review.md` — Supervisor feedback (if exists).
+- `supervisor/final_review.json` — Final critic feedback (if exists, from revision loop).
+- `supervisor/final_review.md` — Final critic narrative (if exists, from revision loop).
 - `idea/synthesis.json` — Original proposal for consistency checking.
 
 ## Outputs

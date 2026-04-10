@@ -101,6 +101,18 @@ def main():
         else:
             console.print(f"[red]LaTeX compilation failed: {result['log'][:200]}[/red]")
 
+    @app.command(name="cli-record")
+    def cli_record_cmd(
+        workspace: str = typer.Argument(..., help="Workspace path"),
+        stage: str = typer.Argument(..., help="Pipeline stage name"),
+        result: str = typer.Argument(..., help="Result summary text"),
+        score: float = typer.Argument(0.0, help="Numeric score (0-10)"),
+    ):
+        """Record stage result and advance pipeline."""
+        from tao.orchestrate import cli_record
+        next_stage = cli_record(workspace, stage, result, score)
+        console.print(f"[green]Recorded {stage} → next: {next_stage}[/green]")
+
     @app.command()
     def init(
         topic: str = typer.Argument(..., help="Research topic or spec.md path"),
@@ -163,7 +175,7 @@ def _fallback_main():
     args = sys.argv[1:]
     if not args or args[0] in ("--help", "-h"):
         print("Tao Research System CLI")
-        print("Commands: status, init, experiment-status, dispatch, evolve, self-heal-scan, latex-compile, dashboard")
+        print("Commands: status, init, cli-record, experiment-status, dispatch, evolve, self-heal-scan, latex-compile, dashboard")
         print("Install typer and rich for full CLI: pip install typer rich")
         return
 
@@ -177,6 +189,13 @@ def _fallback_main():
         from tao.orchestrate import cli_init
         topic = args[1] if len(args) > 1 else "research"
         print(cli_init(topic))
+    elif cmd == "cli-record":
+        from tao.orchestrate import cli_record
+        stage = args[2] if len(args) > 2 else ""
+        result = args[3] if len(args) > 3 else ""
+        score = float(args[4]) if len(args) > 4 else 0.0
+        next_stage = cli_record(workspace, stage, result, score)
+        print(f"Recorded {stage} → next: {next_stage}")
     elif cmd == "experiment-status":
         from tao.gpu_scheduler import get_progress_summary
         print(json.dumps(get_progress_summary(workspace), indent=2))

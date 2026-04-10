@@ -15,8 +15,8 @@ Read the following workspace files:
 
 - `exp/results/pilots/` — Pilot experiment results.
 - `idea/synthesis.json` — The research proposal being tested.
-- `plan/experiment_plan.json` — Pilot task definitions and success criteria.
-- `supervisor/experiment_status.json` — Pilot completion status.
+- `plan/task_plan.json` — Pilot task definitions and success criteria.
+- `supervisor/experiment_status.json` — Pilot completion status (if available).
 - `context/literature_survey.md` — Baseline comparisons.
 - `reflection/lessons_learned.md` — Prior iteration lessons (if exists).
 

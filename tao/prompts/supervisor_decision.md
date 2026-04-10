@@ -16,9 +16,9 @@ Read the following workspace files:
 - `idea/result_synthesis.json` — Synthesized analysis of experiment results.
 - `idea/result_synthesis.md` — Narrative result analysis.
 - `idea/synthesis.json` — Original research proposal and hypothesis.
-- `plan/experiment_plan.json` — Task success criteria.
+- `plan/task_plan.json` — Task success criteria.
 - `exp/results/` — Raw results for verification.
-- `supervisor/experiment_status.json` — Experiment completion status.
+- `supervisor/experiment_status.json` — Experiment completion status (if available).
 - `reflection/lessons_learned.md` — Lessons from prior iterations (if exists).
 
 ## Outputs

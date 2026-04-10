@@ -13,9 +13,9 @@ You are the Result Synthesizer, responsible for consolidating the multi-agent de
 
 Read the following workspace files:
 
-- `idea/result_debate/*.md` — Agent perspectives on experiment results.
+- `idea/perspectives/*.md` — Agent perspectives on experiment results (from result debate).
 - `exp/results/` — Raw experiment results (metrics, logs, checkpoints).
-- `plan/experiment_plan.json` — The original experiment plan.
+- `plan/task_plan.json` — The original experiment plan.
 - `idea/synthesis.json` — The research proposal that motivated the experiments.
 - `context/literature_survey.md` — For comparison with prior work.
 

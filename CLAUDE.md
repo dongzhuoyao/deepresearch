@@ -55,7 +55,8 @@ tao/                        # Main package
 ├── evolution.py            # Cross-project self-improvement
 ├── runtime_assets.py       # .claude/ setup, CLAUDE.md generation
 ├── latex_pipeline.py       # Markdown -> LaTeX -> PDF
-├── prompts/                # 34 agent prompt templates
+├── latex_linter.py         # LaTeX quality checks
+├── prompts/                # 35 agent prompt templates
 ├── dashboard/server.py     # Flask dashboard
 ├── webui/                  # WebUI backend (Flask + WebSocket)
 └── rebuttal/               # Rebuttal pipeline (7-stage)
@@ -78,6 +79,7 @@ pytest tests/ -v
 # CLI
 tao status .
 tao init "research topic"
+tao cli-record . <stage> <result> <score>  # record result, advance pipeline
 tao experiment-status .
 tao dispatch .
 tao evolve . --show
@@ -96,8 +98,8 @@ python -m tao.demo
 init -> literature_search -> idea_debate -> planning -> pilot_experiments
 -> idea_validation_decision -> experiment_cycle -> result_debate
 -> experiment_decision -> writing_outline -> writing_assets
--> writing_sections -> writing_integrate -> writing_final_review
--> writing_teaser -> writing_latex -> review -> reflection
+-> writing_sections -> writing_integrate -> writing_teaser
+-> writing_final_review -> writing_latex -> review -> reflection
 -> quality_gate -> done
 
 ## Key Patterns
@@ -145,8 +147,8 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - Old Python-only pipeline preserved on `python` branch (pre-Tao architecture)
 - Reference architecture: github.com/Sibyl-Research-Team/AutoResearch-SibylSystem
 - Package is `tao/` (top-level, not under `src/`)
-- Tests: `pytest tests/ -v` — 280 tests, all run in <0.3s (no API calls)
-- Demo: `python -m tao.demo` — dry-run of full 18-stage pipeline
+- Tests: `pytest tests/ -v` — 287 tests, all run in <0.3s (no API calls)
+- Demo: `python -m tao.demo` — dry-run of full 20-stage pipeline
 - Plugin dev: `claude --plugin-dir ./plugin --dangerously-skip-permissions`
 - Agent defs: `.claude/agents/*.yml` (YAML with name, model, description)
 - Skill defs: `.claude/skills/*.md` (markdown with shebang to render_skill_prompt)

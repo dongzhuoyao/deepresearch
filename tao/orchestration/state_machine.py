@@ -39,7 +39,7 @@ class StateMachine:
         # --- Idea validation decision ---
         if current_stage == "idea_validation_decision":
             upper = result.upper()
-            if "PIVOT" in upper or "REFINE" in upper:
+            if "DECISION: PIVOT" in upper or "DECISION: REFINE" in upper:
                 rounds_used = self._count_stage_visits("idea_validation_decision")
                 if rounds_used < self._cfg.idea_validation_rounds:
                     return "idea_debate"
@@ -48,7 +48,7 @@ class StateMachine:
         # --- Experiment decision (pivot or proceed) ---
         if current_stage == "experiment_decision":
             upper = result.upper()
-            if "DECISION: PIVOT" in upper or "PIVOT" in upper:
+            if "DECISION: PIVOT" in upper:
                 cycles_used = self._count_stage_visits("experiment_decision")
                 if cycles_used < self._cfg.idea_exp_cycles:
                     return "idea_debate"

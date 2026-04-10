@@ -62,14 +62,16 @@ def compile_pdf(
     if latex_content:
         tex_file.write_text(latex_content, encoding="utf-8")
     elif not tex_file.exists():
-        # Try converting from paper.md
+        # Try converting from markdown (editor writes paper_draft.md)
+        paper_draft = root / "writing" / "paper_draft.md"
         paper_md = root / "writing" / "paper.md"
-        if paper_md.exists():
-            md_content = paper_md.read_text(encoding="utf-8")
+        md_source = paper_draft if paper_draft.exists() else paper_md
+        if md_source.exists():
+            md_content = md_source.read_text(encoding="utf-8")
             latex_content = markdown_to_latex(md_content)
             tex_file.write_text(latex_content, encoding="utf-8")
         else:
-            return {"success": False, "pdf_path": "", "log": "No paper.tex or paper.md found"}
+            return {"success": False, "pdf_path": "", "log": "No paper.tex, paper_draft.md, or paper.md found"}
 
     # Compile with pdflatex (2 passes for references)
     pdf_path = latex_dir / "paper.pdf"

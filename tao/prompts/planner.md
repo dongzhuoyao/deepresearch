@@ -24,12 +24,12 @@ Read the following workspace files:
 
 Write the experiment plan to:
 
-- `plan/experiment_plan.json` — Structured plan:
+- `plan/task_plan.json` — Structured plan (consumed by gpu_scheduler):
   ```json
   {
     "tasks": [
       {
-        "task_id": "pilot_baseline_cifar10",
+        "id": "pilot_baseline_cifar10",
         "type": "pilot|full",
         "description": "Short description",
         "code_template": "template name or inline spec",

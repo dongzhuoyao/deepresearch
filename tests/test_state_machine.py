@@ -83,14 +83,14 @@ class TestValidationLogic:
     def test_validation_refine(self, tmp_path):
         sm = _make_sm(tmp_path, idea_validation_rounds=3)
         next_stage = sm.natural_next_stage(
-            "idea_validation_decision", result="REFINE"
+            "idea_validation_decision", result="DECISION: REFINE"
         )
         assert next_stage == "idea_debate"
 
     def test_validation_pivot(self, tmp_path):
         sm = _make_sm(tmp_path, idea_validation_rounds=3)
         next_stage = sm.natural_next_stage(
-            "idea_validation_decision", result="PIVOT"
+            "idea_validation_decision", result="DECISION: PIVOT"
         )
         assert next_stage == "idea_debate"
 
@@ -112,7 +112,7 @@ class TestValidationLogic:
             {"stage": "idea_validation_decision"},
         )
         next_stage = sm.natural_next_stage(
-            "idea_validation_decision", result="REFINE"
+            "idea_validation_decision", result="DECISION: REFINE"
         )
         assert next_stage == "experiment_cycle"
 
