@@ -9,5 +9,5 @@ Trigger cross-project self-evolution to improve the system based on past runs.
 - `--reset`: Clear evolution history (fresh start)
 
 ```bash
-python3 -c "from sibyl.orchestrate import cli_evolve; print(cli_evolve('$ARGUMENTS' or '.'))"
+python3 -c "from tao.orchestrate import cli_evolve; print(cli_evolve('$ARGUMENTS' or '.'))"
 ```

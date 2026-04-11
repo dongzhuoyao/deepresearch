@@ -11,5 +11,5 @@ Show the current state of a research pipeline.
 3. Display: stage, iteration, quality score, running experiments, errors.
 
 ```bash
-python3 -c "from sibyl.orchestrate import cli_status; print(cli_status('$ARGUMENTS' or '.'))"
+python3 -c "from tao.orchestrate import cli_status; print(cli_status('$ARGUMENTS' or '.'))"
 ```

@@ -5,9 +5,11 @@ from pathlib import Path
 from typing import Any
 
 from tao.config import Config
+from tao.evolution import load_evolution_log
 from tao.workspace import Workspace
 from tao.orchestration.lifecycle import Lifecycle
 from tao.orchestration.action_dispatcher import render_execution_script
+from tao.orchestration.prompt_loader import compile_prompt
 from tao.orchestration.state_machine import StateMachine
 
 
@@ -97,6 +99,40 @@ def cli_status(workspace_path: str) -> str:
     return json.dumps(orch.get_status(), indent=2, ensure_ascii=False)
 
 
+def cli_evolve(arguments: str = ".") -> str:
+    """Manage evolution log from the orchestration API."""
+    args = (arguments or ".").strip()
+    workspace = "."
+    mode = "--show"
+    for token in args.split():
+        if token.startswith("--"):
+            mode = token
+        elif token:
+            workspace = token
+
+    log_file = Path(workspace) / "logs" / "evolution_log.jsonl"
+
+    if mode == "--reset":
+        if log_file.exists():
+            log_file.unlink()
+        return "Evolution history reset"
+
+    entries = load_evolution_log(workspace)
+    if not entries:
+        return "No evolution history found"
+
+    if mode == "--apply":
+        return "Evolution overlays are generated lazily from the existing log in this build."
+
+    lines = []
+    for entry in entries[-10:]:
+        quality = entry.get("quality_trajectory", "unknown")
+        issues = entry.get("issues_count", 0)
+        fixes = entry.get("fixes_count", 0)
+        lines.append(f"[{quality}] issues={issues} fixes={fixes}")
+    return "\n".join(lines)
+
+
 def cli_init(topic: str, config_path: str = "", workspace_dir: str = "") -> str:
     """Initialize a new project. Returns workspace path."""
     if config_path:
@@ -136,10 +172,18 @@ def cli_init_from_spec(spec_path: str, config_path: str = "", workspace_dir: str
 
 def render_skill_prompt(workspace_path: str, skill_name: str) -> str:
     """Render a compiled prompt for a skill. Called by skill shebangs."""
-    # Will be fully implemented when prompt_loader is ready
-    ws = Workspace(workspace_path)
-    topic = ws.read_file("topic.txt") or "research"
-    return f"You are {skill_name} working on: {topic}"
+    ws_path = Path(workspace_path).resolve()
+    config_file = ws_path / "config.yaml"
+    cfg = Config.from_yaml(str(config_file)) if config_file.exists() else Config()
+    ws = Workspace(ws_path, iteration_dirs=cfg.iteration_dirs)
+    agent_name = _skill_to_agent_name(skill_name)
+    extra_context = "\n".join([
+        "## Runtime Contract",
+        f"- Active workspace root: `{ws_path}`",
+        "- Use repository CLI entrypoints and workspace files as the source of truth.",
+        "- Do not rely on host-specific slash commands when a Python or shell command is available.",
+    ])
+    return compile_prompt(agent_name, ws, cfg, extra_context=extra_context)
 
 
 def _load_orchestrator(workspace_path: str) -> FarsOrchestrator:
@@ -165,3 +209,25 @@ def _topic_to_name(topic: str) -> str:
     # Add timestamp for uniqueness
     ts = int(time.time()) % 100000
     return f"{name}_{ts}"
+
+
+def _skill_to_agent_name(skill_name: str) -> str:
+    """Map a public skill identifier to the underlying prompt name."""
+    normalized = skill_name.strip()
+    explicit_mappings = {
+        "experiment-supervisor": "experiment_supervisor",
+        "final-critic": "final_critic",
+        "idea-validation-decision": "idea_validation_decision",
+        "latex-writer": "latex_writer",
+        "literature": "literature_researcher",
+        "novelty-checker": "novelty_checker",
+        "outline-writer": "outline_writer",
+        "result-synthesizer": "result_synthesizer",
+        "section-critic": "section_critic",
+        "section-writer": "section_writer",
+        "self-healer": "self_healer",
+        "sequential-writer": "sequential_writer",
+        "simulated-reviewer": "simulated_reviewer",
+        "supervisor-decision": "supervisor_decision",
+    }
+    return explicit_mappings.get(normalized, normalized.replace("-", "_"))

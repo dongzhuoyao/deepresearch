@@ -8,7 +8,7 @@ Launch the autonomous 18-stage research pipeline from the beginning.
 
 1. Read workspace status:
    ```bash
-   python3 -c "from sibyl.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
+   python3 -c "from tao.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
    ```
 
 2. Enter the orchestration loop:

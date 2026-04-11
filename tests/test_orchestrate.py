@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from tao.orchestrate import (
     FarsOrchestrator, cli_next, cli_record, cli_status,
-    cli_init, cli_init_from_spec, _topic_to_name,
+    cli_evolve, cli_init, cli_init_from_spec, render_skill_prompt, _topic_to_name,
 )
 from tao.config import Config
 
@@ -95,6 +95,30 @@ class TestCliInterface:
         ws = Path(path)
         assert (ws / "spec.md").exists()
         assert (ws / "topic.txt").exists()
+
+    def test_render_skill_prompt(self, tmp_path):
+        ws = tmp_path / "ws"
+        orch = FarsOrchestrator(ws, Config())
+        orch.init_project("Neural scaling laws")
+        prompt = render_skill_prompt(str(ws), "planner")
+        assert "Neural scaling laws" in prompt
+        assert "Runtime Contract" in prompt
+
+    def test_render_skill_prompt_skill_mapping(self, tmp_path):
+        ws = tmp_path / "ws"
+        orch = FarsOrchestrator(ws, Config())
+        orch.init_project("test")
+        prompt = render_skill_prompt(str(ws), "literature")
+        assert "literature" in prompt.lower()
+
+    def test_cli_evolve_show_and_reset(self, tmp_path):
+        logs = tmp_path / "logs"
+        logs.mkdir()
+        log_file = logs / "evolution_log.jsonl"
+        log_file.write_text('{"quality_trajectory":"up","issues_count":2,"fixes_count":1}\n')
+        assert "issues=2" in cli_evolve(f"{tmp_path} --show")
+        assert cli_evolve(f"{tmp_path} --reset") == "Evolution history reset"
+        assert not log_file.exists()
 
 
 class TestHelpers:

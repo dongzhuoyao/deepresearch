@@ -8,7 +8,7 @@ Resume an interrupted research pipeline from its current stage.
 
 1. Read current status and determine where we left off:
    ```bash
-   python3 -c "from sibyl.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
+   python3 -c "from tao.orchestrate import cli_status; print(cli_status('$ARGUMENTS'))"
    ```
 
 2. Resume the orchestration loop from the current stage. Same as `/start` but picks up where we stopped.
