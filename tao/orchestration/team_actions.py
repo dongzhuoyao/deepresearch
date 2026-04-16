@@ -36,6 +36,8 @@ def build_idea_debate(config: "Config") -> Action:
             "post_steps": [
                 {"skill": "tao-synthesizer", "description": "Synthesize best idea from debate"},
             ],
+            "context_isolation": True,
+            "isolation_inputs": ["baseline_paper", "candidate"],
         },
         description="Multi-agent idea debate and synthesis",
         estimated_minutes=15,
@@ -53,6 +55,8 @@ def build_result_debate(config: "Config") -> Action:
             "post_steps": [
                 {"skill": "tao-result-synthesizer", "description": "Synthesize result analysis"},
             ],
+            "context_isolation": True,
+            "isolation_inputs": ["contract", "experiment_record"],
         },
         description="Multi-agent result analysis and debate",
         estimated_minutes=15,
@@ -86,6 +90,8 @@ def build_review(config: "Config") -> Action:
             "name": "review_team",
             "prompt": "Final structural and content review of the paper",
             "agents": agents,
+            "context_isolation": True,
+            "isolation_inputs": ["contract", "section"],
         },
         description="Final paper review by supervisor and critic",
         estimated_minutes=10,

@@ -130,3 +130,46 @@ class TestReviewArtifacts:
     def test_simulated_review(self):
         action = build_simulated_review(Config())
         assert action.action_type == "skill"
+
+
+def test_idea_debate_enables_context_isolation():
+    a = build_idea_debate(Config())
+    assert a.team["context_isolation"] is True
+    assert a.team["isolation_inputs"] == ["baseline_paper", "candidate"]
+
+
+def test_result_debate_enables_context_isolation():
+    a = build_result_debate(Config())
+    assert a.team["context_isolation"] is True
+    assert a.team["isolation_inputs"] == ["contract", "experiment_record"]
+
+
+def test_review_enables_context_isolation():
+    a = build_review(Config())
+    assert a.team["context_isolation"] is True
+    assert a.team["isolation_inputs"] == ["contract", "section"]
+
+
+def test_writing_integrate_does_not_isolate():
+    a = build_writing_integrate(Config())
+    # Editorial integration needs full-draft context — must NOT isolate.
+    assert "context_isolation" not in a.team or a.team.get("context_isolation") is False
+
+
+def test_dispatcher_renders_isolation_block():
+    from tao.orchestration.action_dispatcher import render_execution_script
+    a = build_idea_debate(Config())
+    a.stage = "idea_debate"
+    a.iteration = 1
+    script = render_execution_script(a)
+    assert "Context isolation" in script
+    assert "baseline_paper" in script
+    assert "candidate" in script
+
+
+def test_dispatcher_skips_isolation_block_when_disabled():
+    from tao.orchestration.action_dispatcher import render_execution_script
+    a = build_writing_integrate(Config())
+    a.stage = "writing_integrate"
+    script = render_execution_script(a)
+    assert "Context isolation" not in script

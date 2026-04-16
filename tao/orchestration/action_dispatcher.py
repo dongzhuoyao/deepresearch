@@ -92,6 +92,12 @@ def _script_team(action: Action) -> str:
         desc = agent.get("description", "")
         lines.append(f"  Agent {i}: '{name}' — {desc}")
     lines.append("")
+    if team.get("context_isolation"):
+        isolation_inputs = team.get("isolation_inputs", [])
+        inputs_str = ", ".join(isolation_inputs)
+        lines.append(f"# Context isolation: each agent sees only: {inputs_str}")
+        lines.append("# (do not share other agents' outputs or sibling candidates)")
+        lines.append("")
     lines.append("Step 2: Wait for all agents to complete their perspectives")
 
     if post_steps:
