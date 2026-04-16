@@ -379,3 +379,56 @@ def test_ssh_cmd_prefix_basic_no_key():
     prefix = backend._ssh_cmd_prefix(info)
     assert "-i" not in prefix
     assert "-p" not in prefix
+
+
+# --- tmux-wrapped run_remote ---
+
+def test_run_remote_wraps_in_tmux_when_requested():
+    cfg = Config()
+    backend = RunPodBackend(cfg)
+    ssh_info = {"host": "ssh.runpod.io", "port": 22, "username": "pod-1",
+                "ssh_key": None, "mode": "basic"}
+    captured = {}
+    def fake_via_script(ssh_info_, cmd, timeout):
+        captured["cmd"] = cmd
+        return {"stdout": "", "stderr": "", "returncode": 0}
+    with patch.object(backend, "get_pod_ssh_info", return_value=ssh_info), \
+         patch.object(backend, "_run_remote_via_script", side_effect=fake_via_script):
+        backend.run_remote("pod1", "python train.py", use_tmux=True, session_name="train1")
+    cmd = captured["cmd"]
+    assert "tmux new-session -d -s train1" in cmd
+    assert "python train.py" in cmd
+    assert "__TAO_EXIT__" in cmd
+
+
+def test_run_remote_sanitizes_session_name():
+    cfg = Config()
+    backend = RunPodBackend(cfg)
+    ssh_info = {"host": "ssh.runpod.io", "port": 22, "username": "pod-1",
+                "ssh_key": None, "mode": "basic"}
+    captured = {}
+    def fake_via_script(ssh_info_, cmd, timeout):
+        captured["cmd"] = cmd
+        return {"stdout": "", "stderr": "", "returncode": 0}
+    with patch.object(backend, "get_pod_ssh_info", return_value=ssh_info), \
+         patch.object(backend, "_run_remote_via_script", side_effect=fake_via_script):
+        backend.run_remote("pod1", "echo hi", use_tmux=True, session_name="bad name!")
+    # Unsafe chars replaced with underscore
+    assert "bad_name_" in captured["cmd"] or "bad_name" in captured["cmd"]
+    assert "bad name" not in captured["cmd"]
+
+
+def test_run_remote_does_not_wrap_when_tmux_flag_off():
+    cfg = Config()
+    backend = RunPodBackend(cfg)
+    ssh_info = {"host": "ssh.runpod.io", "port": 22, "username": "pod-1",
+                "ssh_key": None, "mode": "basic"}
+    captured = {}
+    def fake_via_script(ssh_info_, cmd, timeout):
+        captured["cmd"] = cmd
+        return {"stdout": "", "stderr": "", "returncode": 0}
+    with patch.object(backend, "get_pod_ssh_info", return_value=ssh_info), \
+         patch.object(backend, "_run_remote_via_script", side_effect=fake_via_script):
+        backend.run_remote("pod1", "echo hi")
+    assert captured["cmd"] == "echo hi"
+    assert "tmux" not in captured["cmd"]

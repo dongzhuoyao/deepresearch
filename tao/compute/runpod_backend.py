@@ -1,6 +1,8 @@
 """RunPod compute backend — create/manage GPU pods for experiments."""
 from __future__ import annotations
 import os
+import re
+import shlex
 import subprocess
 import json
 import time
@@ -211,14 +213,42 @@ class RunPodBackend(ComputeBackend):
             time.sleep(poll_sec)
         return False
 
-    def run_remote(self, pod_id: str, command: str, timeout_sec: int = 600) -> dict:
+    def run_remote(
+        self,
+        pod_id: str,
+        command: str,
+        timeout_sec: int = 600,
+        use_tmux: bool = False,
+        session_name: str = "tao",
+    ) -> dict:
         """Execute a command on a pod via SSH.
 
         For proxy SSH (basic mode), writes a temp script to the pod first
         to avoid PTY issues with inline commands.
 
+        When ``use_tmux=True``, the command is wrapped in a detached tmux
+        session so it survives SSH disconnects. The wrapper kills any stale
+        session with the same name, launches the command inside
+        ``tmux new-session -d -s <session>`` with output piped to
+        ``/tmp/tao_tmux_<session>.log``, waits for the session to exit, then
+        cats the log back so ``stdout`` in the return dict still contains the
+        command's output. An ``__TAO_EXIT__=<rc>`` marker is appended so the
+        caller can extract the inner exit code.
+
         Returns dict with keys: stdout, stderr, returncode.
         """
+        if use_tmux:
+            safe_name = re.sub(r"[^\w\-]", "_", session_name) or "tao"
+            log_path = f"/tmp/tao_tmux_{safe_name}.log"
+            inner = shlex.quote(f"{command} ; echo __TAO_EXIT__=$?")
+            command = (
+                f"tmux kill-session -t {safe_name} 2>/dev/null ; "
+                f"tmux new-session -d -s {safe_name} {inner} && "
+                f"tmux pipe-pane -t {safe_name} 'cat >>{log_path}' ; "
+                f"while tmux has-session -t {safe_name} 2>/dev/null ; do sleep 5 ; done ; "
+                f"cat {log_path} ; rm -f {log_path}"
+            )
+
         ssh_info = self.get_pod_ssh_info(pod_id)
 
         if ssh_info["mode"] == "basic":
