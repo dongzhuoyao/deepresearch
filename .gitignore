@@ -71,3 +71,6 @@ workspaces/
 AutoResearch-SibylSystem/
 .research/
 scripts/debug_*.py
+
+# Git worktrees
+.worktrees/
