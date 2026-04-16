@@ -81,6 +81,10 @@ class Config:
     codex_idea_rounds: int = 2
     codex_writing_model: str = ""
 
+    # Literature scout (Gemini CLI)
+    lit_search_scout: str = "gemini"        # reserved for future scout backends
+    gemini_cli_bin: str = "gemini"
+
     # Experiment mode
     experiment_mode: str = "runpod"
 
