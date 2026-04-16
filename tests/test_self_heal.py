@@ -106,3 +106,33 @@ class TestSelfHealRouter:
         router = SelfHealRouter(tmp_path)
         errors = router.scan_errors()
         assert len(errors) == 1  # deduped
+
+
+def test_plan_pip_install_returns_agents_parallel_action(tmp_path):
+    from tao.auto_fix import plan_pip_install
+    action = plan_pip_install(package="numpy", workspace_root=tmp_path)
+    assert action.action_type == "agents_parallel"
+    assert action.description.startswith("subagent:")
+    assert action.agents is not None
+    assert len(action.agents) == 1
+    agent = action.agents[0]
+    assert agent["name"] == "tao-installer"
+    assert "pip install numpy" in agent["prompt"]
+
+
+def test_plan_pip_install_maps_module_aliases(tmp_path):
+    from tao.auto_fix import plan_pip_install
+    # sklearn should map to scikit-learn before being handed to pip
+    action = plan_pip_install(package="sklearn", workspace_root=tmp_path)
+    agent = action.agents[0]
+    assert "scikit-learn" in agent["prompt"]
+    assert "scikit-learn" in agent["description"]
+
+
+def test_plan_pip_install_suppresses_log_noise(tmp_path):
+    from tao.auto_fix import plan_pip_install
+    action = plan_pip_install(package="numpy")
+    agent = action.agents[0]
+    # Prompt should instruct the sub-agent NOT to dump full pip output
+    # (that is the whole point — keep noise out of the main context).
+    assert "not" in agent["prompt"].lower() or "only" in agent["prompt"].lower()

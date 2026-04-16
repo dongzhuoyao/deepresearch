@@ -128,3 +128,31 @@ def _module_to_pip(module: str) -> str:
         "yaml": "pyyaml",
     }
     return mapping.get(module, module)
+
+
+def plan_pip_install(package: str, workspace_root: str | Path = "") -> "Action":
+    """Return an agents_parallel Action that installs `package` in a sub-agent.
+
+    Routing heavy ops through a sub-agent keeps pip stdout/stderr out of the
+    orchestrator's main context (the "Context Is All You Need" principle).
+    Callers that want an in-band install should use `_fix_import` instead.
+    """
+    # lazy import to avoid pulling orchestration into self-heal unnecessarily
+    from tao.orchestration.models import Action
+
+    pip_name = _module_to_pip(package)
+    return Action(
+        action_type="agents_parallel",
+        agents=[{
+            "name": "tao-installer",
+            "description": f"subagent: pip install {pip_name}",
+            "prompt": (
+                f"Run `pip install {pip_name}` and report ONLY the final "
+                f"status line (success, or a one-line error summary). "
+                f"Do NOT echo the full pip log back."
+            ),
+            "workspace_path": str(workspace_root),
+        }],
+        description=f"subagent: install {pip_name}",
+        estimated_minutes=5,
+    )
