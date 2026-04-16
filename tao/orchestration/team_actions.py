@@ -83,6 +83,13 @@ def build_review(config: "Config") -> Action:
     agents = [
         {"name": "tao-supervisor", "description": "Supervisor structural review"},
         {"name": "tao-critic", "description": "Critical content review"},
+        {
+            "name": "tao-codex-reviewer",
+            "description": (
+                "Codex/GPT-5 independent review (isolated context: contract + "
+                "one section at a time, no sibling reviewer outputs)"
+            ),
+        },
     ]
     return Action(
         action_type="team",
@@ -93,6 +100,6 @@ def build_review(config: "Config") -> Action:
             "context_isolation": True,
             "isolation_inputs": ["contract", "section"],
         },
-        description="Final paper review by supervisor and critic",
+        description="Final paper review: supervisor + critic + Codex",
         estimated_minutes=10,
     )

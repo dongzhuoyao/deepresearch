@@ -75,7 +75,7 @@ class TestTeamActions:
     def test_review(self):
         action = build_review(Config())
         assert action.action_type == "team"
-        assert len(action.team["agents"]) == 2
+        assert len(action.team["agents"]) == 3
 
 
 class TestExperimentActions:
@@ -173,3 +173,12 @@ def test_dispatcher_skips_isolation_block_when_disabled():
     a.stage = "writing_integrate"
     script = render_execution_script(a)
     assert "Context isolation" not in script
+
+
+def test_review_includes_codex_reviewer():
+    from tao.orchestration.team_actions import build_review
+    from tao.config import Config
+    a = build_review(Config())
+    names = [ag["name"] for ag in a.team["agents"]]
+    assert "tao-codex-reviewer" in names
+    assert len(names) == 3
