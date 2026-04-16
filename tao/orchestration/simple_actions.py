@@ -10,7 +10,14 @@ if TYPE_CHECKING:
 def build_literature_search(config: "Config") -> Action:
     return Action(
         action_type="skill",
-        skills=[{"name": "tao-literature", "description": "Search literature on arXiv and web"}],
+        skills=[{
+            "name": "tao-literature",
+            "description": (
+                "Search literature on arXiv and web; prefer LaTeX e-print / "
+                "Markdown sources over rendered PDFs (use "
+                "tao.paper_source.prefer_source_url to rewrite arXiv URLs)"
+            ),
+        }],
         description="Conduct literature survey",
         estimated_minutes=10,
     )
