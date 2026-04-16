@@ -1,4 +1,4 @@
-# DeepResearch (Tao Architecture)
+# Tao: An Automated Deep Research Pipeline
 
 Autonomous AI Research System -- from idea to paper, zero human intervention. RunPod-native compute.
 
@@ -40,8 +40,11 @@ tao/                        # Main package
 │   ├── ops_cli.py          # Operations CLI
 │   └── migration_cli.py    # Migration utilities
 ├── gpu_scheduler.py        # Task parallelization, topological sort
+├── experiment_launcher.py  # RunPod experiment lifecycle (upload, run, download)
+├── experiment_tasks.py     # Task helpers, model/dataset resolution
 ├── experiment_recovery.py  # Crash detection, state sync
 ├── experiment_records.py   # JSONL experiment database
+├── llm_experiment.py       # LLM-based experiment utilities
 ├── auto_fix.py             # Mechanical fixes (pip install, YAML)
 ├── self_heal.py            # Error routing, circuit breaker
 ├── error_collector.py      # Error aggregation
@@ -133,9 +136,6 @@ TAO_ROOT=...  # optional: override repo root detection
 ## Config
 
 Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
-- `compute_backend: runpod` (always RunPod)
-- `runpod_template_id: runpod-torch-v240` (pre-cached, fast boot)
-- `runpod_cloud_type: SECURE` (always)
 - `runpod_image` — must match GPU arch (see Gotchas for Blackwell)
 - `runpod_gpu_type`, `runpod_max_pods`, `runpod_spot`
 - `research_focus: 1-5` (explore <-> deep focus)
@@ -147,7 +147,10 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - Old Python-only pipeline preserved on `python` branch (pre-Tao architecture)
 - Reference architecture: github.com/Sibyl-Research-Team/AutoResearch-SibylSystem
 - Package is `tao/` (top-level, not under `src/`)
-- Tests: `pytest tests/ -v` — 287 tests, all run in <0.3s (no API calls)
+- Tests: `pytest tests/ -v` — 300 tests, all run in <0.3s (no API calls)
+- Single test: `pytest tests/test_state_machine.py -v`
+- Lint: `ruff check tao`
+- Type check: `mypy tao`
 - Demo: `python -m tao.demo` — dry-run of full 20-stage pipeline
 - Plugin dev: `claude --plugin-dir ./plugin --dangerously-skip-permissions`
 - Agent defs: `.claude/agents/*.yml` (YAML with name, model, description)

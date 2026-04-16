@@ -1,4 +1,4 @@
-# DeepResearch (Tao Architecture)
+# Tao: An Automated Deep Research Pipeline
 
 Autonomous AI Research System that takes a research topic and produces a complete academic paper -- literature review, novel idea generation, experiment design, GPU-based execution, statistical analysis, and LaTeX compilation -- with zero human intervention.
 
@@ -181,6 +181,8 @@ tao/                        # Main Python package
 ├── compute/                # RunPod compute backend
 ├── orchestration/          # State machine, lifecycle, action dispatch
 ├── gpu_scheduler.py        # Parallel task scheduling
+├── experiment_launcher.py  # RunPod experiment lifecycle (upload, run, download)
+├── experiment_tasks.py     # Task helpers, model/dataset resolution
 ├── experiment_recovery.py  # Crash detection and state sync
 ├── auto_fix.py             # Mechanical error fixes
 ├── self_heal.py            # Error routing + circuit breaker
