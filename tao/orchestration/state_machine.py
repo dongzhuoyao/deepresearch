@@ -1,10 +1,9 @@
 """Pipeline state machine — deterministic stage transitions."""
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import TYPE_CHECKING
 
+from tao.event_logger import read_events
 from tao.orchestration.constants import PIPELINE_STAGES
 
 if TYPE_CHECKING:
@@ -127,22 +126,5 @@ class StateMachine:
 
     def _count_stage_visits(self, stage: str) -> int:
         """Count how many times a stage has been visited (from event log)."""
-        events_file = self._ws.active_root / "logs" / "events.jsonl"
-        if not events_file.exists():
-            return 0
-        count = 0
-        with open(events_file, encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = json.loads(line)
-                    if (
-                        entry.get("type") == "stage_complete"
-                        and entry.get("stage") == stage
-                    ):
-                        count += 1
-                except json.JSONDecodeError:
-                    continue
-        return count
+        events = read_events(self._ws.active_root / "logs", event_type="stage_complete")
+        return sum(1 for e in events if e.get("stage") == stage)

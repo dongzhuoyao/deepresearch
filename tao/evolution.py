@@ -1,11 +1,12 @@
 """Cross-project self-evolution -- learn from research to improve prompts."""
 from __future__ import annotations
-import json
 import math
 import time
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+from tao._io import append_jsonl, read_jsonl
 
 
 class IssueCategory(str, Enum):
@@ -144,31 +145,20 @@ def log_evolution_event(
     quality_trajectory: str,
 ) -> None:
     """Log an evolution event to evolution_log.jsonl."""
-    log_file = Path(workspace_root) / "logs" / "evolution_log.jsonl"
-    log_file.parent.mkdir(parents=True, exist_ok=True)
-    entry = {
-        "ts": time.time(),
-        "issues_count": len(issues),
-        "fixes_count": len(fixes),
-        "quality_trajectory": quality_trajectory,
-        "categories": _count_categories(issues),
-    }
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    append_jsonl(
+        Path(workspace_root) / "logs" / "evolution_log.jsonl",
+        {
+            "issues_count": len(issues),
+            "fixes_count": len(fixes),
+            "quality_trajectory": quality_trajectory,
+            "categories": _count_categories(issues),
+        },
+    )
 
 
 def load_evolution_log(workspace_root: str | Path) -> list[dict]:
     """Load the evolution log."""
-    log_file = Path(workspace_root) / "logs" / "evolution_log.jsonl"
-    if not log_file.exists():
-        return []
-    entries = []
-    with open(log_file, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                entries.append(json.loads(line))
-    return entries
+    return read_jsonl(Path(workspace_root) / "logs" / "evolution_log.jsonl")
 
 
 def _is_relevant(agent_name: str, lesson: dict) -> bool:

@@ -64,15 +64,22 @@ class Workspace:
         return resolve_active_root(self._root, status.iteration_dirs, status.iteration)
 
     def get_status(self) -> WorkspaceStatus:
-        """Load and return current workspace status."""
+        """Return current workspace status (cached after first read)."""
+        if self._status is not None:
+            return self._status
         status_file = self._root / "status.json"
-        if status_file.exists():
+        try:
             with open(status_file, encoding="utf-8") as f:
                 data = json.load(f)
             self._status = WorkspaceStatus.from_dict(data)
-        elif self._status is None:
+        except FileNotFoundError:
             self._status = WorkspaceStatus(iteration_dirs=self._iteration_dirs)
         return self._status
+
+    def reload_status(self) -> WorkspaceStatus:
+        """Force re-read status from disk (use when external process may have changed it)."""
+        self._status = None
+        return self.get_status()
 
     def save_status(self, status: WorkspaceStatus | None = None) -> None:
         """Persist workspace status to disk."""

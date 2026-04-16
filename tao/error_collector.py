@@ -1,9 +1,9 @@
 """Structured error collection for self-healing pipeline."""
 from __future__ import annotations
-import json
-import time
 from pathlib import Path
 from typing import Any
+
+from tao._io import append_jsonl, read_jsonl
 
 
 VALID_CATEGORIES = {
@@ -20,16 +20,10 @@ def collect_error(
     details: dict[str, Any] | None = None,
 ) -> None:
     """Append a structured error entry to errors.jsonl."""
-    log_dir = Path(log_dir)
-    log_dir.mkdir(parents=True, exist_ok=True)
-    entry = {
-        "ts": time.time(),
-        "category": category,
-        "message": message,
-        "details": details or {},
-    }
-    with open(log_dir / "errors.jsonl", "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    append_jsonl(
+        Path(log_dir) / "errors.jsonl",
+        {"category": category, "message": message, "details": details or {}},
+    )
 
 
 def read_errors(
@@ -37,19 +31,8 @@ def read_errors(
     category: str | None = None,
 ) -> list[dict]:
     """Read errors from errors.jsonl, optionally filtering by category."""
-    log_file = Path(log_dir) / "errors.jsonl"
-    if not log_file.exists():
-        return []
-    errors = []
-    with open(log_file, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            entry = json.loads(line)
-            if category is None or entry.get("category") == category:
-                errors.append(entry)
-    return errors
+    filter_fn = (lambda e: e.get("category") == category) if category else None
+    return read_jsonl(Path(log_dir) / "errors.jsonl", filter_fn)
 
 
 def clear_errors(log_dir: str | Path) -> None:

@@ -4,9 +4,31 @@ from typing import TYPE_CHECKING
 
 from tao.orchestration.models import Action
 from tao.orchestration.state_machine import StateMachine
+from tao.orchestration.simple_actions import (
+    build_literature_search,
+    build_planning,
+    build_idea_validation,
+    build_experiment_decision,
+    build_writing_outline,
+    build_writing_final_review,
+    build_writing_latex,
+    build_writing_teaser,
+    build_reflection,
+    build_quality_gate,
+)
+from tao.orchestration.team_actions import (
+    build_idea_debate,
+    build_result_debate,
+    build_writing_integrate,
+    build_review,
+)
 from tao.orchestration.experiment_actions import (
     build_experiment_cycle,
     build_pilot_experiments,
+)
+from tao.orchestration.writing_artifacts import (
+    build_writing_assets,
+    build_writing_sections,
 )
 from tao.event_logger import log_event
 
@@ -32,24 +54,24 @@ class Lifecycle:
         # Map stages to action builders
         builders = {
             "init": self._action_init,
-            "literature_search": self._action_literature_search,
-            "idea_debate": self._action_idea_debate,
-            "planning": self._action_planning,
-            "pilot_experiments": self._action_pilot_experiments,
-            "idea_validation_decision": self._action_idea_validation,
-            "experiment_cycle": self._action_experiment_cycle,
-            "result_debate": self._action_result_debate,
-            "experiment_decision": self._action_experiment_decision,
-            "writing_outline": self._action_writing_outline,
-            "writing_assets": self._action_writing_assets,
-            "writing_sections": self._action_writing_sections,
-            "writing_integrate": self._action_writing_integrate,
-            "writing_teaser": self._action_writing_teaser,
-            "writing_final_review": self._action_writing_final_review,
-            "writing_latex": self._action_writing_latex,
-            "review": self._action_review,
-            "reflection": self._action_reflection,
-            "quality_gate": self._action_quality_gate,
+            "literature_search": lambda: build_literature_search(self._cfg),
+            "idea_debate": lambda: build_idea_debate(self._cfg),
+            "planning": lambda: build_planning(self._cfg),
+            "pilot_experiments": lambda: build_pilot_experiments(self._cfg),
+            "idea_validation_decision": lambda: build_idea_validation(self._cfg),
+            "experiment_cycle": lambda: build_experiment_cycle(self._cfg),
+            "result_debate": lambda: build_result_debate(self._cfg),
+            "experiment_decision": lambda: build_experiment_decision(self._cfg),
+            "writing_outline": lambda: build_writing_outline(self._cfg),
+            "writing_assets": lambda: build_writing_assets(self._cfg),
+            "writing_sections": lambda: build_writing_sections(self._cfg),
+            "writing_integrate": lambda: build_writing_integrate(self._cfg),
+            "writing_teaser": lambda: build_writing_teaser(self._cfg),
+            "writing_final_review": lambda: build_writing_final_review(self._cfg),
+            "writing_latex": lambda: build_writing_latex(self._cfg),
+            "review": lambda: build_review(self._cfg),
+            "reflection": lambda: build_reflection(self._cfg),
+            "quality_gate": lambda: build_quality_gate(self._cfg),
             "done": self._action_done,
         }
 
@@ -75,7 +97,6 @@ class Lifecycle:
         next_stage = self._sm.natural_next_stage(stage, result, score)
 
         # Handle iteration advancement
-        status = self._ws.get_status()
         if next_stage == "literature_search" and stage == "quality_gate":
             # Starting new iteration
             self._ws.new_iteration()
@@ -87,7 +108,7 @@ class Lifecycle:
 
         return next_stage
 
-    # --- Action builders (one per stage) ---
+    # --- Action builders (only for stages without a standalone builder) ---
 
     def _action_init(self) -> Action:
         return Action(
@@ -95,183 +116,6 @@ class Lifecycle:
             skills=[{"name": "tao-literature", "description": "Initialize research workspace"}],
             description="Initialize project and prepare for literature search",
             estimated_minutes=2,
-        )
-
-    def _action_literature_search(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-literature", "description": "Search literature on arXiv and web"}],
-            description="Conduct literature survey",
-            estimated_minutes=10,
-        )
-
-    def _action_idea_debate(self) -> Action:
-        agents = [
-            {"name": "tao-innovator", "description": "Generate novel research ideas"},
-            {"name": "tao-pragmatist", "description": "Evaluate practical feasibility"},
-            {"name": "tao-theoretical", "description": "Assess theoretical soundness"},
-            {"name": "tao-contrarian", "description": "Challenge assumptions"},
-            {"name": "tao-interdisciplinary", "description": "Cross-domain insights"},
-            {"name": "tao-empiricist", "description": "Evidence-based evaluation"},
-        ]
-        return Action(
-            action_type="team",
-            team={
-                "name": "idea_debate_team",
-                "prompt": "Debate and refine research ideas",
-                "agents": agents,
-                "post_steps": [{"skill": "tao-synthesizer", "description": "Synthesize best idea"}],
-            },
-            description="Multi-agent idea debate and synthesis",
-            estimated_minutes=15,
-        )
-
-    def _action_planning(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-planner", "description": "Design experiment plan with GPU tasks"}],
-            description="Create experiment plan with task dependencies",
-            estimated_minutes=10,
-        )
-
-    def _action_pilot_experiments(self) -> Action:
-        return build_pilot_experiments(self._cfg)
-
-    def _action_idea_validation(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-idea-validation-decision", "description": "Evaluate pilot results and decide ADVANCE/REFINE/PIVOT"}],
-            description="Validate idea based on pilot results",
-            estimated_minutes=5,
-        )
-
-    def _action_experiment_cycle(self) -> Action:
-        return build_experiment_cycle(self._cfg)
-
-    def _action_result_debate(self) -> Action:
-        agents = [
-            {"name": "tao-innovator", "description": "Interpret results creatively"},
-            {"name": "tao-pragmatist", "description": "Practical implications"},
-            {"name": "tao-theoretical", "description": "Theoretical analysis"},
-            {"name": "tao-contrarian", "description": "Challenge conclusions"},
-            {"name": "tao-interdisciplinary", "description": "Cross-domain comparison"},
-            {"name": "tao-empiricist", "description": "Statistical rigor check"},
-        ]
-        return Action(
-            action_type="team",
-            team={
-                "name": "result_debate_team",
-                "prompt": "Analyze and debate experiment results",
-                "agents": agents,
-                "post_steps": [{"skill": "tao-result-synthesizer", "description": "Synthesize result analysis"}],
-            },
-            description="Multi-agent result analysis and debate",
-            estimated_minutes=15,
-        )
-
-    def _action_experiment_decision(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-supervisor-decision", "description": "Decide PROCEED or PIVOT based on results"}],
-            description="Supervisor decides whether to proceed or pivot",
-            estimated_minutes=5,
-        )
-
-    def _action_writing_outline(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-outline-writer", "description": "Create paper outline"}],
-            description="Write paper outline",
-            estimated_minutes=5,
-        )
-
-    def _action_writing_assets(self) -> Action:
-        from tao.orchestration.writing_artifacts import build_writing_assets
-        return build_writing_assets(self._cfg)
-
-    def _action_writing_sections(self) -> Action:
-        if self._cfg.writing_mode == "parallel":
-            from tao.orchestration.constants import PAPER_SECTIONS
-            agents = [
-                {"name": "tao-section-writer", "description": f"Write {title} section", "args": {"section": sid}}
-                for sid, title in PAPER_SECTIONS
-            ]
-            return Action(
-                action_type="skills_parallel",
-                agents=agents,
-                description="Write all paper sections in parallel",
-                estimated_minutes=20,
-            )
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-sequential-writer", "description": "Write all sections sequentially"}],
-            description="Write paper sections sequentially",
-            estimated_minutes=30,
-        )
-
-    def _action_writing_integrate(self) -> Action:
-        return Action(
-            action_type="team",
-            team={
-                "name": "writing_review_team",
-                "prompt": "Cross-critique and integrate paper sections",
-                "agents": [
-                    {"name": "tao-section-critic", "description": "Critique each section"},
-                    {"name": "tao-editor", "description": "Edit and integrate paper"},
-                ],
-            },
-            description="Cross-critique and integrate paper",
-            estimated_minutes=15,
-        )
-
-    def _action_writing_final_review(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-final-critic", "description": "Score paper quality (0-10)"}],
-            description="Final paper quality review",
-            estimated_minutes=5,
-        )
-
-    def _action_writing_teaser(self) -> Action:
-        from tao.orchestration.simple_actions import build_writing_teaser
-        return build_writing_teaser(self._cfg)
-
-    def _action_writing_latex(self) -> Action:
-        return Action(
-            action_type="bash",
-            bash_command="tao latex-compile .",
-            description="Convert to LaTeX and compile PDF",
-            estimated_minutes=5,
-        )
-
-    def _action_review(self) -> Action:
-        return Action(
-            action_type="team",
-            team={
-                "name": "review_team",
-                "prompt": "Final structural and content review",
-                "agents": [
-                    {"name": "tao-supervisor", "description": "Supervisor review"},
-                    {"name": "tao-critic", "description": "Critical review"},
-                ],
-            },
-            description="Final paper review",
-            estimated_minutes=10,
-        )
-
-    def _action_reflection(self) -> Action:
-        return Action(
-            action_type="skill",
-            skills=[{"name": "tao-reflection", "description": "Extract lessons and create action plan"}],
-            description="Reflect on iteration and extract lessons",
-            estimated_minutes=5,
-        )
-
-    def _action_quality_gate(self) -> Action:
-        return Action(
-            action_type="done",
-            description="Quality gate — deterministic decision on DONE or iterate",
-            estimated_minutes=1,
         )
 
     def _action_done(self) -> Action:

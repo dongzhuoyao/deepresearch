@@ -1,5 +1,6 @@
 """Main orchestrator — the API surface for the research pipeline."""
 from __future__ import annotations
+import dataclasses
 import json
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,6 @@ from tao.workspace import Workspace
 from tao.orchestration.lifecycle import Lifecycle
 from tao.orchestration.action_dispatcher import render_execution_script
 from tao.orchestration.prompt_loader import compile_prompt
-from tao.orchestration.state_machine import StateMachine
 from tao.experiment_launcher import run_experiment_phase
 
 
@@ -22,11 +22,9 @@ class FarsOrchestrator:
     """
 
     def __init__(self, workspace_path: str | Path, config: Config | None = None) -> None:
-        self._ws_path = Path(workspace_path).resolve()
         self._cfg = config or Config()
-        self._ws = Workspace(self._ws_path, iteration_dirs=self._cfg.iteration_dirs)
+        self._ws = Workspace(Path(workspace_path).resolve(), iteration_dirs=self._cfg.iteration_dirs)
         self._lifecycle = Lifecycle(self._ws, self._cfg)
-        self._sm = StateMachine(self._ws, self._cfg)
 
     @property
     def workspace(self) -> Workspace:
@@ -42,25 +40,13 @@ class FarsOrchestrator:
         Returns the workspace path.
         """
         self._ws.init_project(topic, self._cfg.to_yaml())
-        return str(self._ws_path)
+        return str(self._ws.root)
 
     def get_next_action(self) -> dict:
         """Get the next action as a JSON-serializable dict."""
         action = self._lifecycle.get_next_action()
         render_execution_script(action)
-        return {
-            "action_type": action.action_type,
-            "stage": action.stage,
-            "iteration": action.iteration,
-            "description": action.description,
-            "estimated_minutes": action.estimated_minutes,
-            "execution_script": action.execution_script,
-            "skills": action.skills,
-            "agents": action.agents,
-            "team": action.team,
-            "bash_command": action.bash_command,
-            "experiment_monitor": action.experiment_monitor,
-        }
+        return dataclasses.asdict(action)
 
     def record_result(self, stage: str, result: str, score: float = 0.0) -> str:
         """Record stage result and advance. Returns next stage."""

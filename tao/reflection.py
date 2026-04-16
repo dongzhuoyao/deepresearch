@@ -1,9 +1,9 @@
 """Iteration logging and reflection support."""
 from __future__ import annotations
 import json
-import time
 from pathlib import Path
-from typing import Any
+
+from tao._io import append_jsonl, read_jsonl
 
 
 def log_iteration(
@@ -22,7 +22,6 @@ def log_iteration(
     log_dir.mkdir(parents=True, exist_ok=True)
 
     entry = {
-        "ts": time.time(),
         "iteration": iteration,
         "stage": stage,
         "changes": changes,
@@ -35,37 +34,21 @@ def log_iteration(
     # Write per-iteration file
     iter_file = log_dir / f"iter_{iteration:03d}_{stage}.json"
     with open(iter_file, "w", encoding="utf-8") as f:
-        json.dump(entry, f, indent=2, ensure_ascii=False)
+        json.dump({"ts": __import__("time").time(), **entry}, f, indent=2, ensure_ascii=False)
 
     # Append to master log
-    master_log = log_dir / "master_log.jsonl"
-    with open(master_log, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    append_jsonl(log_dir / "master_log.jsonl", entry)
 
 
 def load_iteration_log(workspace_root: str | Path) -> list[dict]:
     """Load the full iteration master log."""
-    master_log = Path(workspace_root) / "logs" / "iterations" / "master_log.jsonl"
-    if not master_log.exists():
-        return []
-    entries = []
-    with open(master_log, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                entries.append(json.loads(line))
-    return entries
+    return read_jsonl(Path(workspace_root) / "logs" / "iterations" / "master_log.jsonl")
 
 
 def get_quality_trajectory(workspace_root: str | Path) -> list[float]:
     """Extract quality scores across iterations."""
     entries = load_iteration_log(workspace_root)
-    scores = []
-    for entry in entries:
-        score = entry.get("quality_score")
-        if score is not None and score > 0:
-            scores.append(score)
-    return scores
+    return [e["quality_score"] for e in entries if e.get("quality_score", 0) > 0]
 
 
 def assess_trajectory(scores: list[float]) -> str:

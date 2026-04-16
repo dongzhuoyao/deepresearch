@@ -6,6 +6,8 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any
 
+from tao._io import atomic_write_json
+
 
 @dataclass
 class TaskState:
@@ -49,12 +51,7 @@ def load_experiment_state(workspace_root: str | Path) -> ExperimentState:
 
 def save_experiment_state(workspace_root: str | Path, state: ExperimentState) -> None:
     """Save experiment state atomically."""
-    state_file = Path(workspace_root) / "exp" / "experiment_state.json"
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    tmp = state_file.with_suffix(".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(state.to_dict(), f, indent=2)
-    tmp.rename(state_file)
+    atomic_write_json(Path(workspace_root) / "exp" / "experiment_state.json", state.to_dict())
 
 
 def register_dispatched_tasks(

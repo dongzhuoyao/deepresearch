@@ -1,9 +1,9 @@
 """JSONL-based experiment database."""
 from __future__ import annotations
-import json
-import time
 from pathlib import Path
 from typing import Any
+
+from tao._io import append_jsonl, read_jsonl
 
 
 def record_experiment(
@@ -15,18 +15,16 @@ def record_experiment(
     metadata: dict | None = None,
 ) -> None:
     """Append an experiment record to experiment_db.jsonl."""
-    db_file = Path(workspace_root) / "exp" / "experiment_db.jsonl"
-    db_file.parent.mkdir(parents=True, exist_ok=True)
-    entry = {
-        "ts": time.time(),
-        "task_id": task_id,
-        "config": config,
-        "results": results,
-        "metrics": metrics or {},
-        "metadata": metadata or {},
-    }
-    with open(db_file, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    append_jsonl(
+        Path(workspace_root) / "exp" / "experiment_db.jsonl",
+        {
+            "task_id": task_id,
+            "config": config,
+            "results": results,
+            "metrics": metrics or {},
+            "metadata": metadata or {},
+        },
+    )
 
 
 def load_experiments(
@@ -34,19 +32,8 @@ def load_experiments(
     task_id: str | None = None,
 ) -> list[dict]:
     """Load experiment records, optionally filtered by task_id."""
-    db_file = Path(workspace_root) / "exp" / "experiment_db.jsonl"
-    if not db_file.exists():
-        return []
-    records = []
-    with open(db_file, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            entry = json.loads(line)
-            if task_id is None or entry.get("task_id") == task_id:
-                records.append(entry)
-    return records
+    filter_fn = (lambda e: e.get("task_id") == task_id) if task_id else None
+    return read_jsonl(Path(workspace_root) / "exp" / "experiment_db.jsonl", filter_fn)
 
 
 def get_best_result(

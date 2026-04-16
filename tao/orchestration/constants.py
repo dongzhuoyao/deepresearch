@@ -31,7 +31,6 @@ CHECKPOINT_DIRS = {
     "writing_integrate": "writing/critique",
 }
 
-CHECKPOINT_DIRS_COMPAT = {"writing_critique": "writing/critique"}
 
 PIPELINE_STAGES = [
     "init",

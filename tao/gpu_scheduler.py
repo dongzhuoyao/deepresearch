@@ -2,8 +2,11 @@
 from __future__ import annotations
 import json
 import time
+from collections import deque
 from pathlib import Path
 from typing import Any
+
+from tao._io import atomic_write_json
 
 
 def load_task_plan(workspace_root: str | Path) -> dict:
@@ -43,12 +46,7 @@ def load_gpu_progress(workspace_root: str | Path) -> dict:
 
 def save_gpu_progress(workspace_root: str | Path, progress: dict) -> None:
     """Save GPU progress state atomically."""
-    progress_file = Path(workspace_root) / "exp" / "gpu_progress.json"
-    progress_file.parent.mkdir(parents=True, exist_ok=True)
-    tmp = progress_file.with_suffix(".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(progress, f, indent=2)
-    tmp.rename(progress_file)
+    atomic_write_json(Path(workspace_root) / "exp" / "gpu_progress.json", progress)
 
 
 def topological_sort(tasks: list[dict]) -> list[str]:
@@ -70,19 +68,20 @@ def topological_sort(tasks: list[dict]) -> list[str]:
             if dep in in_deg:
                 in_deg[tid] += 1  # tid depends on dep
 
-    queue = sorted(tid for tid, deg in in_deg.items() if deg == 0)
+    queue = deque(sorted(tid for tid, deg in in_deg.items() if deg == 0))
     result: list[str] = []
 
     while queue:
-        node = queue.pop(0)
+        node = queue.popleft()
         result.append(node)
         # Find tasks that depend on this node
+        newly_ready = []
         for tid, deps in graph.items():
             if node in deps:
                 in_deg[tid] -= 1
                 if in_deg[tid] == 0:
-                    queue.append(tid)
-                    queue.sort()
+                    newly_ready.append(tid)
+        queue.extend(sorted(newly_ready))
 
     if len(result) != len(graph):
         raise ValueError("Circular dependency detected in task plan")

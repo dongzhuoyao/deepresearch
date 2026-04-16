@@ -7,6 +7,7 @@ Autonomous AI Research System -- from idea to paper, zero human intervention. Ru
 ```
 tao/                        # Main package
 ├── __init__.py
+├── _io.py                  # Shared JSONL/JSON I/O utilities
 ├── _paths.py               # Path resolution
 ├── config.py               # YAML-based configuration
 ├── workspace.py            # Filesystem communication hub
@@ -29,16 +30,9 @@ tao/                        # Main package
 │   ├── writing_artifacts.py  # Writing action builders
 │   ├── review_artifacts.py   # Review action builders
 │   ├── reflection_postprocess.py # Post-reflection evolution hook
-│   ├── checkpointing.py     # Pipeline checkpoint/restore
-│   ├── config_helpers.py    # Config utilities
-│   ├── common_utils.py      # Shared orchestration helpers
 │   ├── workspace_paths.py   # Workspace path constants
 │   ├── dashboard_data.py   # Dashboard data generation
-│   ├── cli_core.py         # CLI helpers
-│   ├── runtime_cli.py      # Runtime CLI commands
-│   ├── project_cli.py      # Project management CLI
-│   ├── ops_cli.py          # Operations CLI
-│   └── migration_cli.py    # Migration utilities
+│   └── cli_core.py         # CLI helpers
 ├── gpu_scheduler.py        # Task parallelization, topological sort
 ├── experiment_launcher.py  # RunPod experiment lifecycle (upload, run, download)
 ├── experiment_tasks.py     # Task helpers, model/dataset resolution
