@@ -269,3 +269,41 @@ class TestEdgeCases:
         # The file should be gone, but the directory structure recreated
         assert not sm._ws.active_path("idea/test.txt").exists()
         assert sm._ws.active_path("idea").is_dir()
+
+
+class TestMaxReviewRoundsCap:
+    def test_idea_validation_respects_global_cap(self, tmp_path):
+        sm = _make_sm(tmp_path, idea_validation_rounds=10, max_review_rounds=2)
+        from tao.event_logger import log_event
+        ws = sm._ws
+        for _ in range(2):
+            log_event(
+                ws.active_root / "logs", "stage_complete",
+                {"stage": "idea_validation_decision"},
+            )
+        # Two prior revisits = global cap reached; must force forward even on PIVOT.
+        next_stage = sm.natural_next_stage(
+            "idea_validation_decision", result="DECISION: PIVOT"
+        )
+        assert next_stage == "experiment_cycle"
+
+    def test_experiment_decision_respects_global_cap(self, tmp_path):
+        sm = _make_sm(tmp_path, idea_exp_cycles=10, max_review_rounds=1)
+        from tao.event_logger import log_event
+        ws = sm._ws
+        log_event(
+            ws.active_root / "logs", "stage_complete",
+            {"stage": "experiment_decision"},
+        )
+        # One prior visit = global cap (1) reached; PIVOT must be denied.
+        next_stage = sm.natural_next_stage(
+            "experiment_decision", result="DECISION: PIVOT"
+        )
+        assert next_stage == "writing_outline"
+
+    def test_idea_validation_allows_refine_within_both_caps(self, tmp_path):
+        sm = _make_sm(tmp_path, idea_validation_rounds=5, max_review_rounds=5)
+        next_stage = sm.natural_next_stage(
+            "idea_validation_decision", result="DECISION: REFINE"
+        )
+        assert next_stage == "idea_debate"

@@ -26,6 +26,8 @@ class Config:
     max_parallel_tasks: int = 4
     idea_exp_cycles: int = 6
     idea_validation_rounds: int = 4
+    # Context-Is-All-You-Need: hard cap on review-loop revisits across all decision stages.
+    max_review_rounds: int = 3
     max_iterations: int = 10
     max_iterations_cap: int = 100
     experiment_timeout: int = 300

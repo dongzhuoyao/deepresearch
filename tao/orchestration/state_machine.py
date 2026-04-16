@@ -40,7 +40,9 @@ class StateMachine:
             upper = result.upper()
             if "DECISION: PIVOT" in upper or "DECISION: REFINE" in upper:
                 rounds_used = self._count_stage_visits("idea_validation_decision")
-                if rounds_used < self._cfg.idea_validation_rounds:
+                within_stage_cap = rounds_used < self._cfg.idea_validation_rounds
+                within_global_cap = rounds_used < self._cfg.max_review_rounds
+                if within_stage_cap and within_global_cap:
                     return "idea_debate"
             return self._next_in_pipeline(current_stage)
 
@@ -49,7 +51,9 @@ class StateMachine:
             upper = result.upper()
             if "DECISION: PIVOT" in upper:
                 cycles_used = self._count_stage_visits("experiment_decision")
-                if cycles_used < self._cfg.idea_exp_cycles:
+                within_stage_cap = cycles_used < self._cfg.idea_exp_cycles
+                within_global_cap = cycles_used < self._cfg.max_review_rounds
+                if within_stage_cap and within_global_cap:
                     return "idea_debate"
             return self._next_in_pipeline(current_stage)
 
