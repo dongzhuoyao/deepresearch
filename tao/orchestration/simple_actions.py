@@ -19,8 +19,15 @@ def build_literature_search(config: "Config") -> Action:
 def build_planning(config: "Config") -> Action:
     return Action(
         action_type="skill",
-        skills=[{"name": "tao-planner", "description": "Design experiment plan with task dependencies"}],
-        description="Create experiment methodology and task plan",
+        skills=[{
+            "name": "tao-planner",
+            "description": (
+                "Design experiment plan with task dependencies AND write research "
+                "contract (hypothesis, success/failure signals, ablations) to "
+                "plan/contract.json"
+            ),
+        }],
+        description="Create experiment methodology, task plan, and research contract",
         estimated_minutes=10,
     )
 

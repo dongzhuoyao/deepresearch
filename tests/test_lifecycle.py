@@ -171,3 +171,38 @@ class TestActionDispatcher:
         )
         script = render_execution_script(action)
         assert "experiment-run" in script
+
+
+def test_contract_freezes_on_planning_to_pilot(tmp_path):
+    from tao.config import Config
+    from tao.workspace import Workspace
+    from tao.orchestration.lifecycle import Lifecycle
+    from tao.orchestration.contract import (
+        ResearchContract, Signal, save_contract, CONTRACT_LOCK_PATH,
+    )
+
+    ws = Workspace(tmp_path, iteration_dirs=False)
+    ws.init_project("t")
+    ws.update_stage("planning")
+    save_contract(ws, ResearchContract(
+        version="v1", hypothesis="h",
+        success_signals=[Signal(id="s1", description="metric goes up")],
+        failure_signals=[Signal(id="f1", description="training crashes")],
+        ablations=[],
+    ))
+    lc = Lifecycle(ws, Config())
+    lc.record_result("planning", "done")
+    assert ws.file_exists(CONTRACT_LOCK_PATH)
+
+
+def test_contract_freeze_missing_contract_is_safe(tmp_path):
+    # No contract saved — lifecycle must not crash.
+    from tao.config import Config
+    from tao.workspace import Workspace
+    from tao.orchestration.lifecycle import Lifecycle
+
+    ws = Workspace(tmp_path, iteration_dirs=False)
+    ws.init_project("t")
+    ws.update_stage("planning")
+    lc = Lifecycle(ws, Config())
+    lc.record_result("planning", "done")  # must not raise

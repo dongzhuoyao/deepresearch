@@ -96,6 +96,21 @@ class Lifecycle:
         # Compute next stage
         next_stage = self._sm.natural_next_stage(stage, result, score)
 
+        # Freeze research contract on planning -> pilot_experiments transition.
+        # Missing contracts are tolerated (tests may bypass the planning stage);
+        # we log and continue instead of crashing the lifecycle.
+        if stage == "planning" and next_stage == "pilot_experiments":
+            try:
+                from tao.orchestration.contract import freeze_contract, load_contract
+                load_contract(self._ws)  # raises if missing — skip freeze silently
+                freeze_contract(self._ws)
+            except Exception as e:
+                log_event(
+                    self._ws.active_root / "logs",
+                    "contract_freeze_skipped",
+                    {"error": str(e)},
+                )
+
         # Handle iteration advancement
         if next_stage == "literature_search" and stage == "quality_gate":
             # Starting new iteration
