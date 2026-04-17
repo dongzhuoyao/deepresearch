@@ -193,3 +193,70 @@ def test_run_experiment_phase_wraps_in_tmux(tmp_path, monkeypatch):
 
     assert captured_calls, "run_remote was not called"
     assert all(c.get("use_tmux") is True for c in captured_calls)
+
+
+# --- Launcher safety fixes ---
+
+def test_tmux_session_name_avoids_collision():
+    """Task ids 'a/b' and 'a_b' must NOT produce the same tmux session."""
+    from tao.experiment_launcher import _tmux_session_name
+    a = _tmux_session_name("a/b")
+    b = _tmux_session_name("a_b")
+    assert a != b, f"collision: {a!r} == {b!r}"
+    assert a.startswith("tao_") and b.startswith("tao_")
+
+
+def test_tmux_session_name_handles_all_unsafe_chars():
+    from tao.experiment_launcher import _tmux_session_name
+    # All-unsafe id must still produce a non-empty, unique-to-input name.
+    name = _tmux_session_name("///!!!")
+    assert name.startswith("tao_")
+    assert len(name) > len("tao_")
+
+
+def test_tmux_session_name_is_deterministic():
+    from tao.experiment_launcher import _tmux_session_name
+    assert _tmux_session_name("task-42") == _tmux_session_name("task-42")
+
+
+def test_pod_terminated_on_exception_even_when_keep_pod(tmp_path, monkeypatch):
+    """Paid-compute discipline: keep_pod=True must NOT leak a live pod on failure."""
+    from tao import experiment_launcher as el
+    from tao.config import Config
+
+    (tmp_path / "exp" / "results").mkdir(parents=True)
+    terminate_calls = []
+
+    class FakeBackend:
+        def __init__(self, *a, **k): pass
+        @classmethod
+        def from_config(cls, *a, **k): return cls()
+        def create_pod(self, *a, **k): return {"id": "pod-X"}
+        def wait_for_ready(self, *a, **k): return True
+        def upload_code(self, *a, **k): return True
+        def run_remote(self, pod_id, command, **kw):
+            # Simulate the task failing.
+            return {"stdout": "", "stderr": "boom", "returncode": 1}
+        def download_results(self, *a, **k): return True
+        def terminate_pod(self, pod_id, *a, **k): terminate_calls.append(pod_id)
+        def project_dir(self, name): return f"/workspace/{name}"
+        def stop_pod(self, *a, **k): pass
+        def get_pod_ssh_info(self, *a, **k): return {"mode": "basic"}
+
+    monkeypatch.setattr(el, "RunPodBackend", FakeBackend)
+    monkeypatch.setattr(el, "stage_workspace_bundle", lambda w: str(tmp_path))
+    monkeypatch.setattr(el, "choose_task_script", lambda t: "echo.py")
+    monkeypatch.setattr(el, "pending_phase_tasks", lambda w, p: [
+        {"id": "t1", "phase": "pilot", "script": "echo.py", "gpu_count": 1, "timeout_minutes": 1}
+    ])
+    monkeypatch.setattr(el, "write_phase_summary", lambda w, p: tmp_path / "summary.md")
+    monkeypatch.setattr(el.Config, "from_yaml", classmethod(lambda cls, p: Config()))
+
+    try:
+        el.run_experiment_phase(tmp_path, phase="pilot", keep_pod=True)
+    except RuntimeError:
+        pass  # Task failure is expected — we care about the cleanup.
+
+    assert "pod-X" in terminate_calls, (
+        "keep_pod=True must still terminate the pod when the phase raises"
+    )

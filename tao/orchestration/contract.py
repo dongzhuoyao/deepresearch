@@ -84,8 +84,9 @@ class ResearchContract:
         )
 
 
-# Matches "<lhs> <op> <rhs>" where op is one of >=, <=, >, <.
-_COMPARISON_RE = re.compile(r"^\s*(.+?)\s*(>=|<=|>|<)\s*(.+?)\s*$")
+# Matches "<lhs> <op> <rhs>" where op is one of ==, !=, >=, <=, >, <.
+# Order matters: multi-char ops first so ">=" doesn't match as ">".
+_COMPARISON_RE = re.compile(r"^\s*(.+?)\s*(==|!=|>=|<=|>|<)\s*(.+?)\s*$")
 
 # Pairs of operators that are direct negations of each other.
 _NEGATION_PAIRS = {
@@ -93,6 +94,8 @@ _NEGATION_PAIRS = {
     ("<", ">="),
     (">", "<="),
     ("<=", ">"),
+    ("==", "!="),
+    ("!=", "=="),
 }
 
 

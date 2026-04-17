@@ -135,3 +135,28 @@ def test_negation_detection_le_gt_pair():
     )
     with pytest.raises(ContractError, match="independent"):
         c.validate()
+
+
+def test_negation_detection_eq_neq_pair():
+    # == and != on the same metric are also mere negations.
+    c = ResearchContract(
+        version="v1",
+        hypothesis="h",
+        success_signals=[Signal(id="s1", description="accuracy == 0.9")],
+        failure_signals=[Signal(id="f1", description="accuracy != 0.9")],
+        ablations=[],
+    )
+    with pytest.raises(ContractError, match="independent"):
+        c.validate()
+
+
+def test_distinct_metrics_with_equality_accepted():
+    # Same-shape eq/neq but on different metrics -> NOT a negation.
+    c = ResearchContract(
+        version="v1",
+        hypothesis="h",
+        success_signals=[Signal(id="s1", description="accuracy == 0.9")],
+        failure_signals=[Signal(id="f1", description="loss != 0.9")],
+        ablations=[],
+    )
+    c.validate()  # must not raise

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -42,6 +43,20 @@ def _remote_setup_command(remote_root: str) -> str:
         "python -m pip install --upgrade pip",
         "python -m pip install -e '.[experiment]'",
     ])
+
+
+def _tmux_session_name(task_id: str) -> str:
+    """Build a collision-resistant tmux session name from a task id.
+
+    The backend's own sanitizer collapses any non-word char to "_", which
+    means ids like "a/b" and "a_b" both become "tao_a_b" — a second task's
+    ``kill-session`` would then murder the first. Do the sanitization here
+    and fall back to a hash suffix if the cleaned id is empty.
+    """
+    import hashlib
+    cleaned = re.sub(r"[^\w\-]", "_", task_id)
+    digest = hashlib.sha1(task_id.encode()).hexdigest()[:8]
+    return f"tao_{cleaned}_{digest}" if cleaned else f"tao_{digest}"
 
 
 def _remote_task_command(remote_root: str, task: dict) -> str:
@@ -108,7 +123,7 @@ def run_experiment_phase(
                 _remote_task_command(remote_root, task),
                 timeout_sec=int(task.get("timeout_minutes", 60)) * 60,
                 use_tmux=True,
-                session_name=f"tao_{task['id']}",
+                session_name=_tmux_session_name(task["id"]),
             )
             if result["returncode"] != 0:
                 mark_task_dead(workspace_root, task["id"], reason=result["stderr"] or result["stdout"])
@@ -144,6 +159,16 @@ def run_experiment_phase(
             "executed_tasks": executed,
             "summary_file": str(summary),
         }
+    except BaseException:
+        # Paid-compute discipline: on any failure terminate the pod, even if
+        # the caller requested keep_pod=True. keep_pod is a "hold open for
+        # follow-up work on success" switch — on failure no follow-up is
+        # coming, so never leak a live (billing) pod.
+        try:
+            backend.terminate_pod(pod_id)
+        except Exception:
+            pass
+        raise
     finally:
         shutil.rmtree(bundle_dir, ignore_errors=True)
         if not keep_pod:
