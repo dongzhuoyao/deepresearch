@@ -98,7 +98,7 @@ class TestWritingActions:
         cfg.writing_mode = "parallel"
         action = build_writing_sections(cfg)
         assert action.action_type == "skills_parallel"
-        assert len(action.agents) == 7  # 6 paper sections + claim verifier gate
+        assert len(action.agents) == 6  # one section writer per PAPER_SECTIONS entry
 
     def test_sequential_sections(self):
         cfg = Config()
@@ -184,14 +184,22 @@ def test_review_includes_codex_reviewer():
     assert len(names) == 3
 
 
-def test_writing_sections_parallel_includes_claim_verifier():
+def test_writing_sections_parallel_has_no_verifier_in_fanout():
+    """The parallel writer batch must NOT include a claim verifier —
+    skills_parallel launches everything concurrently, so a verifier at the
+    same depth would race the writers it is supposed to audit. The gate is
+    a library (tao.orchestration.writing_gate) to be called after sections
+    complete, not a sibling agent. See codex review 2026-04-16.
+    """
     from tao.orchestration.writing_artifacts import build_writing_sections
     from tao.config import Config
     cfg = Config()
     cfg.writing_mode = "parallel"
     a = build_writing_sections(cfg)
     names = [ag["name"] for ag in (a.agents or [])]
-    assert "tao-claim-verifier" in names
+    assert "tao-claim-verifier" not in names
+    # Only the section writers run in this fanout.
+    assert all(n == "tao-section-writer" for n in names)
 
 
 def test_writing_sections_sequential_mentions_gate():

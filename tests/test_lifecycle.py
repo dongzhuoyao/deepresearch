@@ -42,7 +42,7 @@ class TestLifecycle:
         lc._ws.update_stage("writing_sections")
         action = lc.get_next_action()
         assert action.action_type == "skills_parallel"
-        assert len(action.agents) == 7  # 6 paper sections + claim verifier gate
+        assert len(action.agents) == 6  # one section writer per PAPER_SECTIONS entry
 
     def test_get_next_action_writing_sequential(self, tmp_path):
         lc = _make_lifecycle(tmp_path, writing_mode="sequential")

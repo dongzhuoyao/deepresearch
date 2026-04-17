@@ -18,16 +18,10 @@ def build_writing_sections(config: "Config") -> Action:
             }
             for sid, title in PAPER_SECTIONS
         ]
-        # Append gate verifier as last agent so the orchestrator can run it after sections exist.
-        agents.append({
-            "name": "tao-claim-verifier",
-            "description": "Verify every empirical claim cites a [signal:*] from plan/contract.json; flag violations to writing/critique/claim_violations.json",
-            "args": {"gate": "writing_gate"},
-        })
         return Action(
             action_type="skills_parallel",
             agents=agents,
-            description="Write all paper sections in parallel, then verify claims against plan/contract.json signals",
+            description="Write all paper sections in parallel",
             estimated_minutes=20,
         )
     return Action(
@@ -39,7 +33,7 @@ def build_writing_sections(config: "Config") -> Action:
                 "cite [signal:*] from plan/contract.json (tao.orchestration.writing_gate)"
             ),
         }],
-        description="Write paper sections sequentially with per-section claim-to-signal gate",
+        description="Write paper sections sequentially",
         estimated_minutes=30,
     )
 
