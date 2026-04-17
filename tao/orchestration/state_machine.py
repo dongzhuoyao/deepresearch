@@ -143,10 +143,20 @@ class StateMachine:
     )
 
     def _count_review_loops(self) -> int:
-        """Total review revisits across every decision stage.
+        """Total *pivot/refine* decisions across every decision stage.
 
-        Used for the global max_review_rounds cap. Per-stage caps still apply
-        independently via _count_stage_visits.
+        Only pivoting outcomes consume the global max_review_rounds budget.
+        A normal PROCEED visit to idea_validation_decision or
+        experiment_decision advances the pipeline without burning budget —
+        counting those here would deny legitimate PIVOTs on the other
+        decision stage (the regression caught in cc review 2026-04-16).
         """
         events = read_events(self._ws.active_root / "logs", event_type="stage_complete")
-        return sum(1 for e in events if e.get("stage") in self._REVIEW_LOOP_STAGES)
+        count = 0
+        for e in events:
+            if e.get("stage") not in self._REVIEW_LOOP_STAGES:
+                continue
+            result = (e.get("result") or "").upper()
+            if "PIVOT" in result or "REFINE" in result:
+                count += 1
+        return count

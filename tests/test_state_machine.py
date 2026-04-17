@@ -279,9 +279,9 @@ class TestMaxReviewRoundsCap:
         for _ in range(2):
             log_event(
                 ws.active_root / "logs", "stage_complete",
-                {"stage": "idea_validation_decision"},
+                {"stage": "idea_validation_decision", "result": "DECISION: PIVOT"},
             )
-        # Two prior revisits = global cap reached; must force forward even on PIVOT.
+        # Two prior pivots = global cap reached; must force forward even on PIVOT.
         next_stage = sm.natural_next_stage(
             "idea_validation_decision", result="DECISION: PIVOT"
         )
@@ -293,9 +293,9 @@ class TestMaxReviewRoundsCap:
         ws = sm._ws
         log_event(
             ws.active_root / "logs", "stage_complete",
-            {"stage": "experiment_decision"},
+            {"stage": "experiment_decision", "result": "DECISION: PIVOT"},
         )
-        # One prior visit = global cap (1) reached; PIVOT must be denied.
+        # One prior pivot = global cap (1) reached; PIVOT must be denied.
         next_stage = sm.natural_next_stage(
             "experiment_decision", result="DECISION: PIVOT"
         )
@@ -326,7 +326,7 @@ class TestMaxReviewRoundsCap:
         # Simulate one prior pivot via idea_validation_decision.
         log_event(
             ws.active_root / "logs", "stage_complete",
-            {"stage": "idea_validation_decision"},
+            {"stage": "idea_validation_decision", "result": "DECISION: PIVOT"},
         )
         # experiment_decision has zero prior visits of its own, but the
         # GLOBAL review-loop budget is already spent. PIVOT must be denied.
@@ -334,3 +334,30 @@ class TestMaxReviewRoundsCap:
             "experiment_decision", result="DECISION: PIVOT"
         )
         assert next_stage == "writing_outline"
+
+    def test_proceed_visits_do_not_consume_global_budget(self, tmp_path):
+        """Regression: only PIVOT/REFINE outcomes burn the max_review_rounds
+        budget. A routine PROCEED through idea_validation_decision must NOT
+        deny a later legitimate PIVOT at experiment_decision.
+        cc review 2026-04-16 caught this: previously all stage_complete
+        events counted, so normal pipeline flow silently exhausted the cap.
+        """
+        sm = _make_sm(
+            tmp_path,
+            idea_validation_rounds=10,
+            idea_exp_cycles=10,
+            max_review_rounds=1,
+        )
+        from tao.event_logger import log_event
+        ws = sm._ws
+        # Prior idea_validation_decision PROCEEDED (normal flow, no pivot).
+        log_event(
+            ws.active_root / "logs", "stage_complete",
+            {"stage": "idea_validation_decision", "result": "DECISION: PROCEED"},
+        )
+        # Global budget should be untouched — the first PIVOT at
+        # experiment_decision is still allowed.
+        next_stage = sm.natural_next_stage(
+            "experiment_decision", result="DECISION: PIVOT"
+        )
+        assert next_stage == "idea_debate"
