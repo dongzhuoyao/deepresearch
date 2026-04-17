@@ -39,9 +39,11 @@ class StateMachine:
         if current_stage == "idea_validation_decision":
             upper = result.upper()
             if "DECISION: PIVOT" in upper or "DECISION: REFINE" in upper:
-                rounds_used = self._count_stage_visits("idea_validation_decision")
-                within_stage_cap = rounds_used < self._cfg.idea_validation_rounds
-                within_global_cap = rounds_used < self._cfg.max_review_rounds
+                stage_visits = self._count_stage_visits("idea_validation_decision")
+                within_stage_cap = stage_visits < self._cfg.idea_validation_rounds
+                within_global_cap = (
+                    self._count_review_loops() < self._cfg.max_review_rounds
+                )
                 if within_stage_cap and within_global_cap:
                     return "idea_debate"
             return self._next_in_pipeline(current_stage)
@@ -50,9 +52,11 @@ class StateMachine:
         if current_stage == "experiment_decision":
             upper = result.upper()
             if "DECISION: PIVOT" in upper:
-                cycles_used = self._count_stage_visits("experiment_decision")
-                within_stage_cap = cycles_used < self._cfg.idea_exp_cycles
-                within_global_cap = cycles_used < self._cfg.max_review_rounds
+                stage_visits = self._count_stage_visits("experiment_decision")
+                within_stage_cap = stage_visits < self._cfg.idea_exp_cycles
+                within_global_cap = (
+                    self._count_review_loops() < self._cfg.max_review_rounds
+                )
                 if within_stage_cap and within_global_cap:
                     return "idea_debate"
             return self._next_in_pipeline(current_stage)
@@ -132,3 +136,17 @@ class StateMachine:
         """Count how many times a stage has been visited (from event log)."""
         events = read_events(self._ws.active_root / "logs", event_type="stage_complete")
         return sum(1 for e in events if e.get("stage") == stage)
+
+    # Decision stages that can pivot back to idea_debate and burn review budget.
+    _REVIEW_LOOP_STAGES = frozenset(
+        {"idea_validation_decision", "experiment_decision"}
+    )
+
+    def _count_review_loops(self) -> int:
+        """Total review revisits across every decision stage.
+
+        Used for the global max_review_rounds cap. Per-stage caps still apply
+        independently via _count_stage_visits.
+        """
+        events = read_events(self._ws.active_root / "logs", event_type="stage_complete")
+        return sum(1 for e in events if e.get("stage") in self._REVIEW_LOOP_STAGES)

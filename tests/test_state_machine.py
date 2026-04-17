@@ -307,3 +307,30 @@ class TestMaxReviewRoundsCap:
             "idea_validation_decision", result="DECISION: REFINE"
         )
         assert next_stage == "idea_debate"
+
+    def test_global_cap_is_shared_across_decision_stages(self, tmp_path):
+        """max_review_rounds must bound TOTAL review loops across both
+        decision stages, not just the current stage. Previously a
+        max_review_rounds=1 setting allowed 1 pivot in idea_validation
+        AND 1 pivot in experiment_decision = 2 loops total. Codex review
+        2026-04-16 flagged this.
+        """
+        sm = _make_sm(
+            tmp_path,
+            idea_validation_rounds=10,
+            idea_exp_cycles=10,
+            max_review_rounds=1,
+        )
+        from tao.event_logger import log_event
+        ws = sm._ws
+        # Simulate one prior pivot via idea_validation_decision.
+        log_event(
+            ws.active_root / "logs", "stage_complete",
+            {"stage": "idea_validation_decision"},
+        )
+        # experiment_decision has zero prior visits of its own, but the
+        # GLOBAL review-loop budget is already spent. PIVOT must be denied.
+        next_stage = sm.natural_next_stage(
+            "experiment_decision", result="DECISION: PIVOT"
+        )
+        assert next_stage == "writing_outline"
