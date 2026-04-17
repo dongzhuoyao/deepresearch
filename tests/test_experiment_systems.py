@@ -118,3 +118,78 @@ class TestExperimentDigest:
         digest = generate_digest(tmp_path)
         assert "baseline" in digest
         assert "acc" in digest
+
+
+def test_run_experiment_phase_wraps_in_tmux(tmp_path, monkeypatch):
+    """experiment_launcher should pass use_tmux=True to run_remote."""
+    from tao import experiment_launcher as el
+
+    # Minimal workspace with one pending task
+    ws = tmp_path
+    (ws / "exp" / "code").mkdir(parents=True)
+    (ws / "exp" / "results").mkdir(parents=True)
+    (ws / "exp" / "tasks.json").write_text(
+        '[{"id":"t1","phase":"pilot","script":"echo.py","gpu_count":1,"timeout_minutes":1}]'
+    )
+
+    captured_calls = []
+
+    class FakeBackend:
+        def __init__(self, *a, **k):
+            pass
+
+        @classmethod
+        def from_config(cls, *a, **k):
+            return cls()
+
+        def ensure_pod(self, *a, **k):
+            return {"pod_id": "p", "remote_root": "/r"}
+
+        def create_pod(self, *a, **k):
+            return {"id": "p"}
+
+        def wait_for_ready(self, *a, **k):
+            return True
+
+        def project_dir(self, name):
+            return f"/workspace/{name}"
+
+        def upload_code(self, *a, **k):
+            return True
+
+        def run_remote(self, pod_id, command, **kw):
+            captured_calls.append(kw)
+            return {"stdout": "", "stderr": "", "returncode": 0}
+
+        def download_results(self, *a, **k):
+            return True
+
+        def terminate_pod(self, *a, **k):
+            pass
+
+        def stop_pod(self, *a, **k):
+            pass
+
+        def get_pod_ssh_info(self, *a, **k):
+            return {"mode": "basic"}
+
+    monkeypatch.setattr(el, "RunPodBackend", FakeBackend)
+
+    # Stub inner helpers that touch the filesystem hard
+    monkeypatch.setattr(el, "stage_workspace_bundle", lambda w: str(tmp_path))
+    monkeypatch.setattr(el, "choose_task_script", lambda t: "echo.py")
+    monkeypatch.setattr(el, "pending_phase_tasks", lambda w, p: [
+        {"id": "t1", "phase": "pilot", "script": "echo.py", "gpu_count": 1, "timeout_minutes": 1}
+    ])
+    monkeypatch.setattr(el, "write_phase_summary", lambda w, p: tmp_path / "summary.md")
+    # Avoid requiring a real config.yaml
+    from tao.config import Config
+    monkeypatch.setattr(el.Config, "from_yaml", classmethod(lambda cls, p: Config()))
+
+    try:
+        el.run_experiment_phase(ws, phase="pilot")
+    except Exception:
+        pass  # test cares only that run_remote was called with use_tmux
+
+    assert captured_calls, "run_remote was not called"
+    assert all(c.get("use_tmux") is True for c in captured_calls)

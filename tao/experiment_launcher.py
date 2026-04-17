@@ -87,7 +87,13 @@ def run_experiment_phase(
         if not backend.upload_code(pod_id, bundle_dir, remote_root):
             raise RuntimeError("Failed to upload workspace bundle to RunPod")
 
-        setup_result = backend.run_remote(pod_id, _remote_setup_command(remote_root), timeout_sec=3600)
+        setup_result = backend.run_remote(
+            pod_id,
+            _remote_setup_command(remote_root),
+            timeout_sec=3600,
+            use_tmux=True,
+            session_name="tao_setup",
+        )
         if setup_result["returncode"] != 0:
             raise RuntimeError(f"Remote setup failed: {setup_result['stderr'] or setup_result['stdout']}")
 
@@ -101,6 +107,8 @@ def run_experiment_phase(
                 pod_id,
                 _remote_task_command(remote_root, task),
                 timeout_sec=int(task.get("timeout_minutes", 60)) * 60,
+                use_tmux=True,
+                session_name=f"tao_{task['id']}",
             )
             if result["returncode"] != 0:
                 mark_task_dead(workspace_root, task["id"], reason=result["stderr"] or result["stdout"])
