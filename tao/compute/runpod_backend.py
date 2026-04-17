@@ -40,6 +40,27 @@ _TEMPLATE_FOR_GPU = {
 }
 
 
+_TMUX_EXIT_RE = re.compile(r"^__TAO_EXIT__=(\d+)\s*$", re.MULTILINE)
+
+
+def _extract_tmux_exit(result: dict) -> dict:
+    """Promote the `__TAO_EXIT__=<rc>` marker in stdout to the real returncode.
+
+    The tmux wrapper always exits 0 at the SSH layer; the inner command's exit
+    code is echoed as a trailing marker line. Parse the last occurrence, drop
+    the marker from stdout, and use its value as the returncode. If no marker
+    is found (e.g. the session died before echoing it) return -1 so callers
+    don't silently treat a lost session as success.
+    """
+    stdout = result.get("stdout", "") or ""
+    matches = list(_TMUX_EXIT_RE.finditer(stdout))
+    if not matches:
+        return {**result, "returncode": -1}
+    last = matches[-1]
+    cleaned = (stdout[:last.start()] + stdout[last.end():]).rstrip("\n") + "\n"
+    return {**result, "stdout": cleaned, "returncode": int(last.group(1))}
+
+
 @lru_cache(maxsize=1)
 def _find_ssh_key() -> str | None:
     """Auto-detect the first available SSH private key in ~/.ssh/."""
@@ -259,23 +280,32 @@ class RunPodBackend(ComputeBackend):
         ssh_info = self.get_pod_ssh_info(pod_id)
 
         if ssh_info["mode"] == "basic":
-            return self._run_remote_via_script(ssh_info, command, timeout_sec)
+            result = self._run_remote_via_script(ssh_info, command, timeout_sec)
+        else:
+            ssh_prefix = self._ssh_cmd_prefix(ssh_info)
+            cmd = ssh_prefix + [self._ssh_target(ssh_info), command]
+            try:
+                proc = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=timeout_sec,
+                )
+                result = {
+                    "stdout": proc.stdout,
+                    "stderr": proc.stderr,
+                    "returncode": proc.returncode,
+                }
+            except subprocess.TimeoutExpired:
+                result = {"stdout": "", "stderr": "Command timed out", "returncode": -1}
+            except Exception as e:
+                result = {"stdout": "", "stderr": str(e), "returncode": -1}
 
-        ssh_prefix = self._ssh_cmd_prefix(ssh_info)
-        cmd = ssh_prefix + [self._ssh_target(ssh_info), command]
-        try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=timeout_sec,
-            )
-            return {
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode,
-            }
-        except subprocess.TimeoutExpired:
-            return {"stdout": "", "stderr": "Command timed out", "returncode": -1}
-        except Exception as e:
-            return {"stdout": "", "stderr": str(e), "returncode": -1}
+        if use_tmux and result.get("returncode") == 0:
+            # In tmux mode the outer wrapper always exits 0 (it waits on the
+            # session then cats the log). The inner command's real exit code
+            # is emitted as "__TAO_EXIT__=<rc>" at the tail of the captured
+            # log. Propagate it so callers see task failures instead of
+            # silently treating crashed runs as successful.
+            result = _extract_tmux_exit(result)
+        return result
 
     def _run_remote_via_script(
         self, ssh_info: dict, command: str, timeout_sec: int = 600

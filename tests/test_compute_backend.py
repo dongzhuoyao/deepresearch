@@ -421,6 +421,69 @@ def test_run_remote_sanitizes_session_name():
     assert "bad name" not in captured["cmd"]
 
 
+def test_run_remote_tmux_propagates_inner_exit_code():
+    """Tmux wrapper always exits 0; real exit code is echoed as __TAO_EXIT__=<rc>.
+    run_remote must promote that marker to the real returncode so callers don't
+    treat crashed experiments as successful runs.
+    """
+    cfg = Config()
+    backend = RunPodBackend(cfg)
+    ssh_info = {"host": "ssh.runpod.io", "port": 22, "username": "pod-1",
+                "ssh_key": None, "mode": "basic"}
+    with patch.object(backend, "get_pod_ssh_info", return_value=ssh_info), \
+         patch.object(
+             backend, "_run_remote_via_script",
+             return_value={
+                 "stdout": "training output\nmore output\n__TAO_EXIT__=42\n",
+                 "stderr": "",
+                 "returncode": 0,  # outer wrapper always returns 0
+             },
+         ):
+        result = backend.run_remote("pod1", "python train.py",
+                                    use_tmux=True, session_name="t1")
+    assert result["returncode"] == 42
+    assert "__TAO_EXIT__" not in result["stdout"]
+    assert "training output" in result["stdout"]
+
+
+def test_run_remote_tmux_marker_missing_returns_minus_one():
+    """If the tmux session dies before echoing the marker, treat as failure."""
+    cfg = Config()
+    backend = RunPodBackend(cfg)
+    ssh_info = {"host": "ssh.runpod.io", "port": 22, "username": "pod-1",
+                "ssh_key": None, "mode": "basic"}
+    with patch.object(backend, "get_pod_ssh_info", return_value=ssh_info), \
+         patch.object(
+             backend, "_run_remote_via_script",
+             return_value={"stdout": "partial output\n", "stderr": "", "returncode": 0},
+         ):
+        result = backend.run_remote("pod1", "crash.sh",
+                                    use_tmux=True, session_name="t1")
+    assert result["returncode"] == -1
+
+
+def test_run_remote_tmux_uses_last_marker_when_multiple():
+    """If output contains __TAO_EXIT__ multiple times (e.g. in application logs),
+    trust the trailing one (which is the wrapper's echo)."""
+    cfg = Config()
+    backend = RunPodBackend(cfg)
+    ssh_info = {"host": "ssh.runpod.io", "port": 22, "username": "pod-1",
+                "ssh_key": None, "mode": "basic"}
+    with patch.object(backend, "get_pod_ssh_info", return_value=ssh_info), \
+         patch.object(
+             backend, "_run_remote_via_script",
+             return_value={
+                 "stdout": "debug: __TAO_EXIT__=999\ndone\n__TAO_EXIT__=0\n",
+                 "stderr": "", "returncode": 0,
+             },
+         ):
+        result = backend.run_remote("pod1", "x",
+                                    use_tmux=True, session_name="t1")
+    assert result["returncode"] == 0
+    # Only the trailing marker is stripped; embedded appearances stay.
+    assert "debug: __TAO_EXIT__=999" in result["stdout"]
+
+
 def test_run_remote_does_not_wrap_when_tmux_flag_off():
     cfg = Config()
     backend = RunPodBackend(cfg)
