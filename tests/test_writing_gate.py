@@ -43,7 +43,7 @@ def test_non_empirical_text_has_no_claims():
 def test_multiple_claims_each_evaluated():
     text = (
         "Our model reaches 82% accuracy on CIFAR [signal:s1]. "
-        "We also improve FLOPs [signal:s99]."
+        "We also improve FLOPs by 30% [signal:s99]."
     )
     vs = verify_claims_against_contract(text, _contract())
     assert len(vs) == 1
@@ -52,4 +52,30 @@ def test_multiple_claims_each_evaluated():
 
 def test_ablation_signal_id_is_accepted():
     text = "Removing LoRA loses 3 pts [signal:a1]."
+    assert verify_claims_against_contract(text, _contract()) == []
+
+
+# --- False-positive regression tests (post-review #2) ---
+
+def test_benign_improve_without_numeric_is_not_a_claim():
+    # "improve" alone is prose, not an empirical claim.
+    text = "We aim to improve readability of the paper."
+    assert verify_claims_against_contract(text, _contract()) == []
+
+
+def test_version_bump_like_number_is_not_a_claim():
+    # "+2 layers" is an architecture detail, not a delta.
+    text = "The model uses +2 layers in stage 3."
+    assert verify_claims_against_contract(text, _contract()) == []
+
+
+def test_sota_mention_without_delta_is_not_a_claim():
+    # Talking about SOTA abstractly is fine; only quantified claims need tags.
+    text = "State-of-the-art models are hard to beat."
+    assert verify_claims_against_contract(text, _contract()) == []
+
+
+def test_outperforms_without_delta_is_not_a_claim():
+    # Unquantified "outperforms" is vague; only flag when a delta is given.
+    text = "Our approach outperforms prior work on several fronts."
     assert verify_claims_against_contract(text, _contract()) == []

@@ -17,13 +17,18 @@ class ClaimViolation:
     reason: str
 
 
+# A claim is a sentence that makes a *quantified* empirical assertion.
+# Bare verbs like "improve" without a number are ambiguous prose, not claims,
+# so the trigger must be numeric. This avoids false positives on sentences
+# like "We aim to improve readability" or "The model uses +2 layers".
 _CLAIM = re.compile(
     r"[^.\n!?]*?"
-    r"(?:improve|outperform|surpass|state[- ]of[- ]the[- ]art|SOTA"
-    r"|\d+(?:\.\d+)?\s*%"
-    r"|\+\d+(?:\.\d+)?(?:\s*(?:point|pt|pts|%))?"
-    r"|\ba[ct]+uracy of\s+\d"
-    r"|reaches?\s+\d+(?:\.\d+)?\s*%)"
+    r"(?:"
+        r"\d+(?:\.\d+)?\s*%"                                       # 82%, 3.5%
+        r"|\+?\s*\d+(?:\.\d+)?\s*(?:pt|pts|point|points)\b"         # +5 pts, 3 points
+        r"|(?:reach(?:es)?|achieve[sd]?|attains?)\s+\d+(?:\.\d+)?"  # reaches 82, achieves 0.9
+        r"|\ba[ct]+uracy of\s+\d+(?:\.\d+)?"                        # accuracy of 98
+    r")"
     r"[^.\n!?]*?[.!?]",
     re.IGNORECASE,
 )
