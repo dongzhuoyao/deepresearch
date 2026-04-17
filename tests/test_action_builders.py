@@ -98,7 +98,7 @@ class TestWritingActions:
         cfg.writing_mode = "parallel"
         action = build_writing_sections(cfg)
         assert action.action_type == "skills_parallel"
-        assert len(action.agents) == 6  # 6 paper sections
+        assert len(action.agents) == 7  # 6 paper sections + claim verifier gate
 
     def test_sequential_sections(self):
         cfg = Config()
@@ -182,3 +182,23 @@ def test_review_includes_codex_reviewer():
     names = [ag["name"] for ag in a.team["agents"]]
     assert "tao-codex-reviewer" in names
     assert len(names) == 3
+
+
+def test_writing_sections_parallel_includes_claim_verifier():
+    from tao.orchestration.writing_artifacts import build_writing_sections
+    from tao.config import Config
+    cfg = Config()
+    cfg.writing_mode = "parallel"
+    a = build_writing_sections(cfg)
+    names = [ag["name"] for ag in (a.agents or [])]
+    assert "tao-claim-verifier" in names
+
+
+def test_writing_sections_sequential_mentions_gate():
+    from tao.orchestration.writing_artifacts import build_writing_sections
+    from tao.config import Config
+    cfg = Config()
+    cfg.writing_mode = "sequential"
+    a = build_writing_sections(cfg)
+    desc = a.skills[0]["description"]
+    assert "signal" in desc.lower() or "gate" in desc.lower()
