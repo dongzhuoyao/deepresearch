@@ -399,6 +399,9 @@ def test_run_remote_wraps_in_tmux_when_requested():
     assert "tmux new-session -d -s train1" in cmd
     assert "python train.py" in cmd
     assert "__TAO_EXIT__" in cmd
+    # Pods that don't ship tmux (e.g. base runpod/pytorch) must self-bootstrap.
+    assert "command -v tmux" in cmd
+    assert "apt-get install -y -qq tmux" in cmd
 
 
 def test_run_remote_sanitizes_session_name():

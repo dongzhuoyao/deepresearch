@@ -241,7 +241,14 @@ class RunPodBackend(ComputeBackend):
             safe_name = re.sub(r"[^\w\-]", "_", session_name) or "tao"
             log_path = f"/tmp/tao_tmux_{safe_name}.log"
             inner = shlex.quote(f"{command} ; echo __TAO_EXIT__=$?")
+            # Bootstrap tmux on pod images that don't ship it (e.g. runpod/pytorch).
+            bootstrap = (
+                "command -v tmux >/dev/null 2>&1 || "
+                "(apt-get update -qq >/dev/null 2>&1 && "
+                "apt-get install -y -qq tmux >/dev/null 2>&1) ; "
+            )
             command = (
+                f"{bootstrap}"
                 f"tmux kill-session -t {safe_name} 2>/dev/null ; "
                 f"tmux new-session -d -s {safe_name} {inner} && "
                 f"tmux pipe-pane -t {safe_name} 'cat >>{log_path}' ; "
