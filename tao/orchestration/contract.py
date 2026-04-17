@@ -1,8 +1,13 @@
 """Frozen research-contract artifact.
 
 A contract locks in hypothesis + independent success/failure signals + ablations.
-Once experiments begin it is frozen; modifications require a new version (v2, v3, ...)
-with a changelog.
+Once experiments begin within an iteration, it is frozen; modifications within
+that iteration require a new version (v2, v3, ...) with a changelog.
+
+Scope of the freeze: both contract.json and contract.lock live under plan/,
+which is iteration-scoped — workspace.clear_iteration_artifacts() removes them
+at iteration boundaries. A new iteration means a new hypothesis, so restarting
+from an empty contract is intended, not a bypass.
 """
 from __future__ import annotations
 
