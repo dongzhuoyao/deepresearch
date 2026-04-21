@@ -126,7 +126,12 @@ def cli_evolve(arguments: str = ".") -> str:
     return "\n".join(lines)
 
 
-def cli_init(topic: str, config_path: str = "", workspace_dir: str = "") -> str:
+def cli_init(
+    topic: str,
+    config_path: str = "",
+    workspace_dir: str = "",
+    workspace_name: str = "",
+) -> str:
     """Initialize a new project. Returns workspace path."""
     if config_path:
         cfg = Config.from_yaml(config_path)
@@ -138,15 +143,19 @@ def cli_init(topic: str, config_path: str = "", workspace_dir: str = "") -> str:
     else:
         ws_dir = cfg.workspaces_dir
 
-    # Generate workspace name from topic
-    ws_name = _topic_to_name(topic)
+    ws_name = _sanitize_workspace_name(workspace_name) if workspace_name else _topic_to_name(topic)
     ws_path = ws_dir / ws_name
 
     orch = FarsOrchestrator(ws_path, cfg)
     return orch.init_project(topic)
 
 
-def cli_init_from_spec(spec_path: str, config_path: str = "", workspace_dir: str = "") -> str:
+def cli_init_from_spec(
+    spec_path: str,
+    config_path: str = "",
+    workspace_dir: str = "",
+    workspace_name: str = "",
+) -> str:
     """Initialize project from a spec.md file. Returns workspace path."""
     spec = Path(spec_path).read_text(encoding="utf-8")
     # Extract topic from first heading or first line
@@ -154,7 +163,7 @@ def cli_init_from_spec(spec_path: str, config_path: str = "", workspace_dir: str
     if not topic:
         topic = "research_project"
 
-    ws_path = cli_init(topic, config_path, workspace_dir)
+    ws_path = cli_init(topic, config_path, workspace_dir, workspace_name)
 
     # Copy spec into workspace
     ws = Workspace(ws_path, iteration_dirs=True)
@@ -202,6 +211,17 @@ def _topic_to_name(topic: str) -> str:
     # Add timestamp for uniqueness
     ts = int(time.time()) % 100000
     return f"{name}_{ts}"
+
+
+def _sanitize_workspace_name(name: str) -> str:
+    """Normalize a user-chosen workspace folder name to a filesystem-safe form."""
+    import re
+    cleaned = name.strip().lower().replace(" ", "_").replace("-", "_")
+    cleaned = re.sub(r"[^a-z0-9_]", "", cleaned)
+    cleaned = cleaned[:80]
+    if not cleaned:
+        raise ValueError(f"Invalid workspace name: {name!r}")
+    return cleaned
 
 
 def _skill_to_agent_name(skill_name: str) -> str:
