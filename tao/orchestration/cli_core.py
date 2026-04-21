@@ -11,7 +11,7 @@ def resolve_workspace(path: str = ".") -> Path:
     return p
 
 
-def find_workspaces(base_dir: str = "workspaces") -> list[Path]:
+def find_workspaces(base_dir: str = "workspace") -> list[Path]:
     """Find all workspaces under a base directory."""
     base = Path(base_dir)
     if not base.exists():

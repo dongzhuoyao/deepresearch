@@ -65,6 +65,7 @@ Thumbs.db
 .ipynb_checkpoints/
 
 # Runtime artifacts
+workspace/
 workspaces/
 *.pt
 *.pth
@@ -74,3 +75,4 @@ scripts/debug_*.py
 
 # Git worktrees
 .worktrees/
+.omx/

@@ -157,7 +157,7 @@ def main():
 
     @app.command()
     def webui(
-        workspaces: str = typer.Option("workspaces", help="Workspaces directory"),
+        workspaces: str = typer.Option("workspace", help="Workspaces directory"),
         host: str = typer.Option("127.0.0.1", help="Bind host"),
         port: int = typer.Option(3000, help="Port (default 3000, try 3001/3002 if busy)"),
     ):
@@ -169,7 +169,7 @@ def main():
 
     @app.command(name="serve")
     def serve(
-        workspaces: str = typer.Option("workspaces", help="Workspaces directory"),
+        workspaces: str = typer.Option("workspace", help="Workspaces directory"),
         host: str = typer.Option("127.0.0.1", help="Bind host"),
         port: int = typer.Option(3000, help="Port (default 3000)"),
     ):

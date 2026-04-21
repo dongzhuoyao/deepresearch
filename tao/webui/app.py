@@ -53,7 +53,7 @@ def _build_tree(root: Path, current: Path, max_depth: int, depth: int = 0) -> li
     return entries
 
 
-def create_webui_app(workspaces_dir: str = "workspaces") -> "Flask":
+def create_webui_app(workspaces_dir: str = "workspace") -> "Flask":
     """Create the WebUI Flask application."""
     if not HAS_FLASK:
         raise RuntimeError("Flask not installed")

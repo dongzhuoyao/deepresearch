@@ -16,7 +16,7 @@ class AgentConfig:
 
 @dataclass
 class Config:
-    workspaces_dir: Path = Path("workspaces")
+    workspaces_dir: Path = Path("workspace")
 
     ideation: AgentConfig = field(default_factory=lambda: AgentConfig(temperature=0.9))
     planning: AgentConfig = field(default_factory=AgentConfig)

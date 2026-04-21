@@ -12,7 +12,7 @@ except ImportError:
 from tao.orchestration.dashboard_data import get_dashboard_data, list_all_projects
 
 
-def create_app(workspaces_dir: str = "workspaces") -> "Flask":
+def create_app(workspaces_dir: str = "workspace") -> "Flask":
     """Create Flask dashboard app."""
     if not HAS_FLASK:
         raise RuntimeError("Flask not installed. Run: pip install flask")
@@ -39,7 +39,7 @@ def create_app(workspaces_dir: str = "workspaces") -> "Flask":
     return app
 
 
-def run_dashboard(workspaces_dir: str = "workspaces", port: int = 3000):
+def run_dashboard(workspaces_dir: str = "workspace", port: int = 3000):
     """Run the dashboard server."""
     app = create_app(workspaces_dir)
     app.run(host="0.0.0.0", port=port)
