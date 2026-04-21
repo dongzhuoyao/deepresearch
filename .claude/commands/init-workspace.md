@@ -133,6 +133,38 @@ workspaces directory, append `_2`, `_3`, … until unique.
 
 Capture the returned workspace path as `WS_PATH`.
 
+After `cli_init_from_spec` returns, also write a machine-readable
+`{WS_PATH}/venue.json` so downstream writing/review agents can consume
+the venue contract without re-parsing `spec.md`:
+
+```json
+{
+  "venue": "{VENUE}",
+  "submission_deadline": "{SUBMISSION_DEADLINE or null}",
+  "anonymity": "{ANONYMITY}",
+  "page_limits": {
+    "main": {MAIN_PAGE_LIMIT as integer, or null if MISSING},
+    "references": "{REFERENCES_LIMIT}",
+    "appendix": "{APPENDIX_LIMIT}"
+  },
+  "template_url": "{TEMPLATE_URL or null}",
+  "submission_site": "{SUBMISSION_SITE_URL or null}",
+  "defaulted_fields": [ ... list from Step 3 ... ]
+}
+```
+
+If `MAIN_PAGE_LIMIT` came back as `MISSING` from the scrape AND was not
+defaulted (i.e. the venue is not NeurIPS), **stop and ask the user**
+via `AskUserQuestion`:
+
+> Could not determine the main-paper page limit from the CFP. What
+> limit should Tao target? (integer, e.g. `8`, `9`, `10`)
+
+Store the answer into `venue.json` and re-record in `spec.md` under the
+"Fields defaulted" line as `main_page_limit (user-supplied)`. Never
+continue with an unknown page limit — the writing pipeline will produce
+a paper that overflows or wastes space if this is wrong.
+
 ### Step 8 — Download the LaTeX template
 
 Stage the venue's style files into the workspace so the `writing_latex`
@@ -215,7 +247,10 @@ the experiment stages.
 Show the user:
 1. Workspace path
 2. Venue + deadline (or `TBD` flag if defaulted)
-3. Page limits
+3. Page limits: print concrete numbers pulled from `venue.json`, e.g.
+   `main=9, references=unlimited, appendix=unlimited (same PDF)`.
+   Mark any user-supplied value with `(user-supplied)` and any defaulted
+   value with `(default)`.
 4. GPU: `yes` or `no (theory/survey mode)`
 5. LaTeX template: `TEMPLATE_STATUS` + basename list (e.g.
    `ok — neurips_2026.sty, neurips_2026.bst`). For any `warn-*` status,
