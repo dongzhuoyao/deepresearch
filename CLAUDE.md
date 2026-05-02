@@ -30,6 +30,8 @@ tao/                        # Main package
 │   ├── writing_artifacts.py  # Writing action builders
 │   ├── review_artifacts.py   # Review action builders
 │   ├── reflection_postprocess.py # Post-reflection evolution hook
+│   ├── contract.py         # Stage I/O contracts (frozen artifact schemas)
+│   ├── writing_gate.py     # Claim→signal regex gate for writing sections
 │   ├── workspace_paths.py   # Workspace path constants
 │   ├── dashboard_data.py   # Dashboard data generation
 │   └── cli_core.py         # CLI helpers
@@ -38,7 +40,7 @@ tao/                        # Main package
 ├── experiment_tasks.py     # Task helpers, model/dataset resolution
 ├── experiment_recovery.py  # Crash detection, state sync
 ├── experiment_records.py   # JSONL experiment database
-├── llm_experiment.py       # LLM-based experiment utilities
+├── llm_experiment.py       # Runnable LLM fine-tuning utilities (dataset/model resolution, chat templates)
 ├── auto_fix.py             # Mechanical fixes (pip install, YAML)
 ├── self_heal.py            # Error routing, circuit breaker
 ├── error_collector.py      # Error aggregation
@@ -47,6 +49,9 @@ tao/                        # Main package
 ├── orchestra_skills.py     # External skill loading
 ├── lark_sync.py            # Lark document sync
 ├── lark_markdown_converter.py # Lark <-> Markdown conversion
+├── paper_source.py         # arXiv/source URL rewriter (prefer LaTeX over PDF)
+├── scouts/                 # External literature scouts
+│   └── gemini.py           # Gemini CLI scout (multi-angle web search)
 ├── demo.py                 # Dry-run demo of full pipeline
 ├── reflection.py           # Iteration logging, quality trajectory
 ├── evolution.py            # Cross-project self-improvement
@@ -60,7 +65,7 @@ tao/                        # Main package
 plugin/                     # Claude Code plugin
 ├── commands/               # 9 skill commands
 └── hooks/scripts/          # 3 lifecycle hooks
-.claude/agents/             # 35 agent definitions (YAML)
+.claude/agents/             # 36 agent definitions (YAML)
 .claude/skills/             # 34 skill definitions (Markdown)
 ```
 
@@ -118,6 +123,12 @@ TAO_ROOT=...  # optional: override repo root detection
 # Note: No ANTHROPIC_API_KEY needed -- Claude Code handles its own auth
 ```
 
+## External Tools
+
+- `gemini` CLI — required by `tao/scouts/gemini.py` for literature search; pipeline fails-quiet if missing but coverage degrades
+- `tmux` — auto-bootstrapped on RunPod pods; required locally for long-running remote experiments
+- LaTeX (`pdflatex`/`bibtex`) — required by `tao latex-compile`
+
 ## SSH / RunPod
 
 - Private key: `~/.ssh/id_ed25519`
@@ -141,7 +152,7 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - Old Python-only pipeline preserved on `python` branch (pre-Tao architecture)
 - Reference architecture: github.com/Sibyl-Research-Team/AutoResearch-SibylSystem
 - Package is `tao/` (top-level, not under `src/`)
-- Tests: `pytest tests/ -v` — 300 tests, all run in <0.3s (no API calls)
+- Tests: `pytest tests/ -v` — 367 tests, all run in <0.3s (no API calls)
 - Single test: `pytest tests/test_state_machine.py -v`
 - Lint: `ruff check tao`
 - Type check: `mypy tao`
@@ -153,6 +164,7 @@ Edit `config.example.yaml` and copy to `config.yaml`. Key settings:
 - CLI aliases: `tao` and `deepresearch` both work (same entry point)
 - Two SSH modes: "full" (public IP, supports rsync/scp) and "basic" (proxied via ssh.runpod.io, tar fallback for file transfer)
 - Workspace is the communication hub — agents never talk directly, only via files
+- Default workspace dir is `workspace/` (singular) — `init-workspace` stages a LaTeX template and asks for the folder name
 
 ## Gotchas
 
